@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "outDir": "./dist",
+    "declaration": true,
+    "incremental": true,
+    // Keeping the incremental cache inside dist/ (not the project root)
+    // means it's wiped by nest-cli.json's deleteOutDir on every build,
+    // instead of surviving as a stale reference to a dist/ that no longer
+    // exists — the exact bug that twice produced a "successful" build with
+    // a silently incomplete dist/ (see PROGRESS.md Sprint 1 bug #12).
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
+  }
+}

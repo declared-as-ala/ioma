@@ -1,0 +1,20 @@
+# Caddy auto-provisions and renews TLS certificates for the domain below.
+# Swap ${DOMAIN} for the real production domain once assigned — see
+# CLIENT_REQUIREMENTS.md "Final domain name(s)".
+{$DOMAIN:localhost} {
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

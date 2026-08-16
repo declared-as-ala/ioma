@@ -1,0 +1,118 @@
+name: ioma-dev
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-ioma_dev_access}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-ioma_dev_secret_change_me}
+    ports:
+      # Host-side ports only — remapped to avoid clashing with unrelated
+      # local containers. Internal Docker-network traffic (api -> minio:9000)
+      # is unaffected; MINIO_PORT stays 9000 in .env for that reason.
+      - "127.0.0.1:9010:9000"
+      - "127.0.0.1:9011:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025" # web UI
+      - "127.0.0.1:1025:1025" # smtp
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/api.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/ioma
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      # .env's MINIO_PORT=9010 is the host-remapped port (see the minio
+      # service's comment above) — internal Docker-network traffic must
+      # use the container's actual listening port, 9000. Without this
+      # override the containerized API tries minio:9010 and fails; found
+      # live once the API itself (not just the host-run bucket-init
+      # script) first connected to MinIO in Sprint 6.
+      MINIO_PORT: "9000"
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/web.Dockerfile
+      # This dev stack has no reverse proxy in front of web/api (unlike
+      # the documented production shape — see .env.example), so the
+      # browser needs the API's own host-reachable URL baked into the
+      # client bundle at build time. See web.Dockerfile for why this must
+      # be a build arg, not a runtime `environment:` entry.
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      API_URL: http://api:4000
+      PORT: ${WEB_PORT:-3000}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  redis-data:
+  minio-data:

@@ -1,0 +1,17 @@
+{
+  "name": "@ioma/infra-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "minio:init-buckets": "ts-node minio-init.ts",
+    "backup": "bash backup.sh"
+  },
+  "dependencies": {
+    "minio": "^8.0.3"
+  },
+  "devDependencies": {
+    "@ioma/tsconfig": "workspace:*",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

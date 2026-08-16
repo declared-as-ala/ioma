@@ -1,0 +1,963 @@
+{
+  "Home": {
+    "hero": {
+      "kicker": "IOMA Paris — Dubaï",
+      "title": "La science de votre peau, et d'aucune autre.",
+      "subtitle": "Le soin personnalisé français, formulé à partir d'une lecture haute technologie de votre peau.",
+      "diagnosisCta": "Commencer mon diagnostic",
+      "shopCta": "Découvrir les produits"
+    },
+    "maison": {
+      "label": "La Maison",
+      "title": "La précision parisienne, écrite pour le climat du Golfe.",
+      "body": "Fondée à Paris autour d'une conviction — aucune peau ne se ressemble — IOMA mesure avant de formuler. Notre méthode de diagnostic tient compte de la chaleur, du soleil et de la climatisation comme de véritables facteurs qui façonnent les besoins d'une peau au quotidien.",
+      "cta": "Découvrir la Maison"
+    },
+    "diagnosis": {
+      "label": "Diagnostic de peau",
+      "title": "Votre peau, en chiffres.",
+      "body": "Deux chemins vers la même précision : un questionnaire guidé que vous remplissez vous-même, ou une analyse assistée par IA à partir d'une photo — les deux se convertissent directement en votre routine personnalisée, avec relecture et confirmation en institut.",
+      "metric1": "Hydratation",
+      "metric2": "Éclat",
+      "metric3": "Fermeté",
+      "metric4": "Rides",
+      "metric5": "Pores",
+      "metric6": "Homogénéité",
+      "diagnosisCta": "Commencer le diagnostic",
+      "bookCta": "Réserver une analyse en institut"
+    },
+    "ranges": {
+      "title": "Sept réponses à sept histoires de peau.",
+      "cta": "Explorer la boutique",
+      "hydra": "Hydratation durable pour peaux tiraillées ou ternes",
+      "energize": "Éclat et vitalité pour peaux fatiguées",
+      "renew": "Fermeté pour les premiers signes du temps",
+      "calm": "Confort pour peaux réactives et sensibles",
+      "purete": "Clarté purifiante pour peaux grasses à imperfections",
+      "matte": "Équilibre et contrôle de la brillance pour peaux grasses",
+      "illumine": "Teint uniforme face aux taches"
+    },
+    "featured": {
+      "label": "Boutique",
+      "title": "Un point de départ."
+    },
+    "results": {
+      "label": "Résultats visibles",
+      "title": "Un progrès qui se lit.",
+      "intro": "Chaque diagnostic peut être relu sur demande, pour que le progrès se mesure et ne se suppose pas — votre profil complet se relit en quelques minutes en institut.",
+      "stat1Caption": "des femmes déclarent une peau visiblement plus confortable*",
+      "stat2Caption": "paramètres analysés lors d'un diagnostic complet*",
+      "stat3Caption": "minutes pour une lecture complète en institut*",
+      "disclaimer": "*Chiffres en attente — seront fournis par IOMA Paris à partir de données d'étude clinique ou consommateur communiquées par le client. Non encore publiés."
+    },
+    "soins": {
+      "label": "Soins",
+      "title": "Le protocole, exécuté à la main.",
+      "body": "Au-delà de la routine à domicile, nos spas et instituts partenaires délivrent des soins professionnels — la même méthode fondée sur le diagnostic, exécutée par des mains formées.",
+      "cta": "Voir les soins"
+    },
+    "partners": {
+      "label": "Partenaires",
+      "title": "Où trouver IOMA aux Émirats.",
+      "body": "Comptoirs de diagnostic, spas et instituts partenaires à travers les Émirats.",
+      "cta": "Trouver un partenaire"
+    },
+    "professionals": {
+      "title": "Pour les spas, cliniques et hôtels.",
+      "body": "Le programme professionnel IOMA apporte le soin piloté par diagnostic à votre établissement : produits cabine, protocoles, formation et un portail de commande dédié.",
+      "cta": "Demander un compte professionnel"
+    },
+    "journal": {
+      "label": "Journal",
+      "title": "Notes sur la peau, la science et Paris.",
+      "cta": "Lire le journal",
+      "article1Kicker": "Climat & Peau",
+      "article1Title": "Pourquoi un été à Dubaï change votre routine barrière",
+      "article2Kicker": "Diagnostic",
+      "article2Title": "Lire un diagnostic : ce que les chiffres signifient vraiment"
+    },
+    "appointment": {
+      "title": "Réservez votre rendez-vous diagnostic",
+      "body": "Vous préférez un diagnostic en personne ? Réservez une séance avec un partenaire près de chez vous.",
+      "cta": "Choisir un créneau"
+    }
+  },
+  "MaisonPage": {
+    "kicker": "La Maison",
+    "title": "Une maison fondée sur la précision",
+    "intro": "IOMA est née à Paris d'une conviction qui guide encore chaque formule aujourd'hui : le soin devrait être prescrit, jamais deviné.",
+    "philosophyTitle": "Le diagnostic avant la formule",
+    "philosophyBody": "Bien avant qu'un produit ne vous parvienne, un diagnostic a lieu. Chaque routine IOMA commence par identifier ce dont votre peau a réellement besoin — et non ce qu'une gamme générique suppose.",
+    "pillarsTitle": "Ce qui nous guide",
+    "pillar1Title": "Personnalisation",
+    "pillar1Body": "Aucune peau ne ressemble à une autre. Notre technologie et nos formules sont pensées pour refléter cette réalité, pas pour la lisser.",
+    "pillar2Title": "Savoir-faire français",
+    "pillar2Body": "Formulée et développée en France, avec la rigueur d'une maison qui considère le soin comme une discipline de précision.",
+    "pillar3Title": "Des formules pensées",
+    "pillar3Body": "Chaque gamme répond à un objectif clair — hydratation, renouveau, apaisement — plutôt qu'à une longue liste de promesses éparses.",
+    "ctaTitle": "Faites-en l'expérience",
+    "ctaBody": "La meilleure façon de comprendre La Maison IOMA est de passer votre propre diagnostic.",
+    "cta": "Commencer mon diagnostic"
+  },
+  "TechnologyPage": {
+    "kicker": "Notre Technologie",
+    "title": "La peau, lue avec précision",
+    "intro": "Avant de recommander quoi que ce soit, nous mesurons. La technologie de diagnostic IOMA est conçue pour comprendre l'état réel et actuel de votre peau — pas un profil générique basé sur l'âge ou le type de peau seul.",
+    "howTitle": "Comment ça marche",
+    "step1Title": "Diagnostic",
+    "step1Body": "Un questionnaire court et précis — ou une séance en personne avec un partenaire — identifie les besoins réels de votre peau : hydratation, fermeté, éclat, et plus encore.",
+    "step2Title": "Formule",
+    "step2Body": "Vos réponses déterminent la gamme et les étapes de routine qui vous conviennent, selon des règles définies par notre équipe de formulation, et non un quiz générique.",
+    "step3Title": "Routine",
+    "step3Body": "Vous recevez une routine claire, matin et soir — les produits dont vous avez besoin, dans l'ordre où ils agissent le mieux, rien de superflu.",
+    "aiTitle": "Analyse assistée par IA",
+    "aiBody": "Pour une lecture encore plus précise, notre analyse de peau assistée par IA étudie une photo de votre peau pour des indicateurs comme la texture, le teint et les ridules. Les résultats sont toujours clairement identifiés et ne sont jamais présentés comme un diagnostic médical.",
+    "cta": "Essayer le diagnostic"
+  },
+  "ContactPage": {
+    "kicker": "Contact",
+    "title": "Nous serions ravis de vous lire",
+    "intro": "Questions sur un diagnostic, une commande ou un partenariat — envoyez-nous un message, notre équipe vous répondra rapidement.",
+    "nameLabel": "Nom complet",
+    "emailLabel": "E-mail",
+    "subjectLabel": "Sujet",
+    "messageLabel": "Message",
+    "submit": "Envoyer le message",
+    "submitting": "Envoi en cours…",
+    "successTitle": "Message envoyé",
+    "successBody": "Merci — nous avons bien reçu votre message et vous répondrons sous peu.",
+    "errorBody": "Une erreur est survenue lors de l'envoi. Merci de réessayer.",
+    "validation": {
+      "nameRequired": "Merci de saisir votre nom",
+      "emailInvalid": "Merci de saisir une adresse e-mail valide",
+      "subjectRequired": "Merci de saisir un sujet",
+      "messageTooShort": "Merci d'écrire au moins 10 caractères"
+    }
+  },
+  "TreatmentsPage": {
+    "kicker": "Soins",
+    "title": "Soins en institut, pilotés par le diagnostic.",
+    "intro": "Chaque protocole ci-dessous part du même principe que la routine à domicile : une lecture réelle de votre peau, pas un menu générique.",
+    "backToTreatments": "Retour aux soins",
+    "duration": "{minutes} min",
+    "bookCta": "Réserver ce soin"
+  },
+  "ProfessionalsPage": {
+    "kicker": "Espace Professionnels",
+    "title": "Apportez le soin piloté par diagnostic à votre établissement.",
+    "intro": "Le programme professionnel IOMA s'adresse aux spas, cliniques esthétiques, instituts de beauté et hôtels qui souhaitent offrir la même approche fondée sur la précision que nous proposons à nos clientes individuelles.",
+    "benefitsTitle": "Ce que comprend le programme",
+    "benefit1Title": "Produits cabine",
+    "benefit1Body": "Des formules à concentration professionnelle, conditionnées pour un usage en cabine, non vendues au détail.",
+    "benefit2Title": "Protocoles & formation",
+    "benefit2Body": "Des protocoles de soin détaillés et une formation pratique pour votre équipe, afin que chaque séance suive le même standard fondé sur le diagnostic.",
+    "benefit3Title": "Commande & accompagnement",
+    "benefit3Body": "Un portail de commande professionnel dédié avec vos propres tarifs, et un accompagnement continu de notre équipe.",
+    "processTitle": "Comment ça marche",
+    "process1": "Présentez-nous votre établissement",
+    "process2": "Notre équipe étudie votre demande",
+    "process3": "Une fois approuvée, vous accédez au portail professionnel",
+    "cta": "Demander plus d'informations"
+  },
+  "FaqPage": {
+    "kicker": "FAQ",
+    "title": "Questions fréquentes",
+    "q1Title": "Comment fonctionne le diagnostic ?",
+    "q1Body": "Vous répondez à un questionnaire court et précis — ou vous rendez chez un partenaire pour une séance en personne. Vos réponses déterminent la gamme et la routine adaptées à votre peau.",
+    "q2Title": "L'analyse de peau par IA est-elle un diagnostic médical ?",
+    "q2Body": "Non. Il s'agit d'une analyse simulée et informative destinée à guider votre routine — jamais un substitut à un avis médical. Les résultats sont toujours clairement identifiés.",
+    "q3Title": "Livrez-vous dans tous les Émirats ?",
+    "q3Body": "Les modalités et zones de livraison seront confirmées lors du paiement une fois notre boutique en ligne. Voir la Politique de Livraison pour les informations à jour.",
+    "q4Title": "Comment devenir partenaire professionnel IOMA ?",
+    "q4Body": "Rendez-vous sur la page Professionnels et soumettez votre candidature. Notre équipe étudie chaque demande et revient vers vous avec les prochaines étapes.",
+    "q5Title": "Puis-je supprimer mes données de diagnostic ou d'analyse IA ?",
+    "q5Body": "Oui — vous pouvez supprimer vos diagnostics enregistrés ainsi que vos images et résultats d'analyse IA à tout moment depuis votre compte.",
+    "contactCta": "Une autre question ? Contactez-nous"
+  },
+  "Health": {
+    "checking": "Vérification de la connexion à l'API...",
+    "connected": "API connectée",
+    "disconnected": "API inaccessible — la stack de développement est-elle lancée ?"
+  },
+  "Nav": {
+    "home": "Accueil IOMA Paris",
+    "homeShort": "Accueil",
+    "mobileNavigation": "Navigation mobile",
+    "primaryNavigation": "Navigation principale",
+    "openMenu": "Ouvrir la navigation principale",
+    "closeMenu": "Fermer le menu",
+    "languageSwitcher": "Choisir la langue",
+    "shop": "Boutique",
+    "diagnosis": "Diagnostic",
+    "maison": "La Maison",
+    "technology": "Technologie",
+    "treatments": "Soins",
+    "partners": "Trouver un partenaire",
+    "journal": "Journal",
+    "professionals": "Professionnels",
+    "account": "Compte",
+    "search": "Rechercher",
+    "bag": "Panier",
+    "bookAppointment": "Prendre rendez-vous",
+    "region": "Émirats Arabes Unis",
+    "currency": "Prix en AED",
+    "bottomNavigation": "Navigation basse",
+    "searchInputPlaceholder": "Rechercher routines, produits, ingrédients...",
+    "closeSearch": "Fermer la recherche",
+    "popularConcerns": "Préoccupations populaires",
+    "concernHydration": "Hydratation",
+    "concernAntiAging": "Anti-âge",
+    "concernRadiance": "Éclat",
+    "concernFirmness": "Fermeté",
+    "concernPores": "Pores",
+    "goAction": "Aller"
+  },
+  "Footer": {
+    "discoverTitle": "Découvrir",
+    "shopTitle": "Boutique",
+    "supportTitle": "Aide",
+    "legalTitle": "Mentions légales",
+    "maison": "La Maison IOMA",
+    "technology": "Notre Technologie",
+    "diagnosis": "Diagnostic de Peau",
+    "treatments": "Soins",
+    "journal": "Journal",
+    "allProducts": "Tous les Produits",
+    "partners": "Trouver un Partenaire",
+    "professionals": "Espace Professionnels",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "shipping": "Politique de Livraison",
+    "returns": "Politique de Retour",
+    "privacy": "Politique de Confidentialité",
+    "cookies": "Politique de Cookies",
+    "terms": "Conditions Générales",
+    "accessibility": "Déclaration d'Accessibilité",
+    "copyright": "© {year} IOMA Paris. Tous droits réservés.",
+    "claimFootnote": "*N°1 en ventes de soins personnalisés (source : Cosmétiquemag, novembre 2018).",
+    "newsletterTitle": "Restez informée",
+    "newsletterBody": "La science de la peau, nos nouvelles gammes et l'actualité IOMA dans votre boîte mail.",
+    "newsletterPlaceholder": "Votre e-mail",
+    "newsletterSubmit": "S'inscrire",
+    "newsletterSubmitting": "Inscription en cours…",
+    "newsletterSuccess": "Vous êtes inscrite.",
+    "newsletterError": "Une erreur est survenue. Merci de réessayer.",
+    "region": "Émirats Arabes Unis",
+    "currency": "Prix en AED"
+  },
+  "Legal": {
+    "pendingNotice": "Cette page est une structure provisoire — le texte juridique final sera fourni par IOMA Paris et validé par un conseil juridique avant la mise en ligne. Rien ci-dessous n'a de valeur contractuelle.",
+    "sectionPendingLabel": "Contenu en attente — à fournir par IOMA Paris.",
+    "privacy": {
+      "kicker": "Mentions légales",
+      "title": "Politique de Confidentialité",
+      "sections": [
+        "Informations collectées",
+        "Utilisation de vos informations",
+        "Partage des données",
+        "Vos droits",
+        "Conservation des données",
+        "Nous contacter"
+      ]
+    },
+    "cookies": {
+      "kicker": "Mentions légales",
+      "title": "Politique de Cookies",
+      "sections": [
+        "Qu'est-ce qu'un cookie",
+        "Cookies utilisés",
+        "Gérer vos préférences",
+        "Nous contacter"
+      ]
+    },
+    "shipping": {
+      "kicker": "Mentions légales",
+      "title": "Politique de Livraison",
+      "sections": [
+        "Zones de livraison",
+        "Délais de livraison",
+        "Frais de livraison",
+        "Suivi de commande"
+      ]
+    },
+    "returns": {
+      "kicker": "Mentions légales",
+      "title": "Politique de Retour",
+      "sections": [
+        "Éligibilité au retour",
+        "Comment retourner un article",
+        "Remboursements",
+        "Échanges"
+      ]
+    },
+    "terms": {
+      "kicker": "Mentions légales",
+      "title": "Conditions Générales",
+      "sections": [
+        "Acceptation des conditions",
+        "Utilisation du site",
+        "Commandes & paiement",
+        "Propriété intellectuelle",
+        "Limitation de responsabilité",
+        "Droit applicable"
+      ]
+    },
+    "accessibility": {
+      "kicker": "Mentions légales",
+      "title": "Déclaration d'Accessibilité",
+      "sections": ["Notre engagement", "Normes visées", "Retours", "Nous contacter"]
+    },
+    "aiConsent": {
+      "kicker": "Mentions légales",
+      "title": "Consentement IA & Traitement d'Image",
+      "sections": [
+        "Ce que nous collectons",
+        "Utilisation de votre image",
+        "Conservation & suppression des données",
+        "Vos droits de consentement"
+      ]
+    }
+  },
+  "Shop": {
+    "kicker": "Boutique",
+    "title": "Chaque gamme, à un diagnostic près.",
+    "allRanges": "Toutes les gammes",
+    "allConcerns": "Tous les besoins",
+    "searchPlaceholder": "Rechercher un produit",
+    "noResults": "Aucun produit ne correspond à ces filtres pour le moment.",
+    "priceFrom": "À partir de {price}",
+    "viewProduct": "Voir le produit"
+  },
+  "Product": {
+    "routineStep": {
+      "morning": "Matin",
+      "evening": "Soir",
+      "both": "Matin et soir"
+    },
+    "ingredientsTitle": "Ingrédients",
+    "howToUseTitle": "Mode d'emploi",
+    "sizeLabel": "Contenance",
+    "addToCart": "Ajouter au panier",
+    "addedToCart": "Ajouté au panier",
+    "outOfStock": "Rupture de stock",
+    "wishlistAdd": "Ajouter à ma liste d'envies",
+    "wishlistRemove": "Retirer de ma liste d'envies",
+    "wishlistSignInRequired": "Connectez-vous pour enregistrer ce produit dans votre liste d'envies."
+  },
+  "Cart": {
+    "title": "Votre panier",
+    "empty": "Votre panier est vide.",
+    "emptyBody": "Explorez les gammes et ajoutez une étape de routine pour commencer.",
+    "continueShopping": "Continuer mes achats",
+    "subtotal": "Sous-total",
+    "checkout": "Commander",
+    "remove": "Retirer",
+    "quantity": "Quantité"
+  },
+  "Checkout": {
+    "progressLabel": "Progression de la commande",
+    "stepStates": {
+      "complete": "Terminée",
+      "current": "Étape en cours",
+      "upcoming": "À venir"
+    },
+    "steps": {
+      "address": "Adresse",
+      "delivery": "Livraison",
+      "payment": "Paiement",
+      "confirm": "Confirmation"
+    },
+    "back": "Retour",
+    "continue": "Continuer",
+    "addressTitle": "Adresse de livraison",
+    "fullName": "Nom complet",
+    "phone": "Téléphone",
+    "emirate": "Émirat",
+    "city": "Ville",
+    "addressLine1": "Adresse",
+    "addressLine2": "Appartement, étage (facultatif)",
+    "deliveryTitle": "Mode de livraison",
+    "standard": "Standard — 2 à 4 jours ouvrés",
+    "express": "Express — jour ouvré suivant",
+    "freeShippingNote": "Livraison standard offerte dès 300 AED.",
+    "paymentTitle": "Paiement",
+    "paymentDemoBanner": "Mode démo — aucune passerelle de paiement n'est encore connectée et aucun paiement réel ne sera effectué. Choisissez un résultat ci-dessous pour voir la réaction du parcours de commande.",
+    "simulateSuccess": "Simuler un paiement réussi",
+    "simulateFailure": "Simuler un paiement échoué",
+    "placeOrder": "Confirmer la commande",
+    "summarySubtotal": "Sous-total",
+    "summaryTax": "TVA (5 %)",
+    "summaryShipping": "Livraison",
+    "summaryTotal": "Total",
+    "confirmationTitle": "Merci, votre commande est confirmée.",
+    "confirmationBody": "Une confirmation a été enregistrée pour la commande {orderNumber}.",
+    "orderFailedTitle": "Votre paiement n'a pas abouti.",
+    "orderFailedBody": "La commande {orderNumber} a bien été créée, mais le paiement a été refusé. Vous pouvez réessayer ci-dessous — vos articles n'ont pas été perdus.",
+    "retryPayment": "Réessayer le paiement",
+    "backToShop": "Retour à la boutique"
+  },
+  "Wishlist": {
+    "title": "Votre liste d'envies",
+    "empty": "Votre liste d'envies est vide.",
+    "signInPrompt": "Connectez-vous pour consulter et enregistrer des produits dans votre liste d'envies.",
+    "remove": "Retirer"
+  },
+  "Login": {
+    "kicker": "Compte",
+    "title": "Connexion",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "submit": "Se connecter",
+    "submitting": "Connexion en cours...",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "registerLink": "En créer un",
+    "errorGeneric": "Cette combinaison e-mail / mot de passe ne correspond à aucun compte."
+  },
+  "Register": {
+    "kicker": "Compte",
+    "title": "Créer votre compte",
+    "firstNameLabel": "Prénom",
+    "lastNameLabel": "Nom",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "passwordHint": "Au moins 10 caractères, avec une majuscule, une minuscule et un chiffre.",
+    "submit": "Créer le compte",
+    "submitting": "Création de votre compte...",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "loginLink": "Se connecter",
+    "errorGeneric": "Impossible de créer votre compte. Si vous en avez déjà un, essayez de vous connecter."
+  },
+  "Account": {
+    "kicker": "Compte",
+    "loading": "Chargement de votre compte",
+    "loadError": "Impossible de charger ces informations. Veuillez réessayer.",
+    "saveError": "Impossible d'enregistrer vos modifications. Veuillez réessayer.",
+    "deleteError": "Impossible de supprimer cette adresse. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "nav": {
+      "accountNavigation": "Navigation du compte",
+      "dashboard": "Tableau de bord",
+      "profile": "Profil",
+      "addresses": "Adresses",
+      "orders": "Commandes",
+      "appointments": "Rendez-vous",
+      "wishlist": "Liste d'envies",
+      "diagnosis": "Diagnostic",
+      "security": "Sécurité",
+      "deleteAccount": "Supprimer le compte",
+      "logout": "Se déconnecter",
+      "loggingOut": "Déconnexion..."
+    },
+    "dashboard": {
+      "title": "Votre compte",
+      "welcomeBack": "Bon retour, {firstName}."
+    },
+    "profile": {
+      "title": "Profil",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "dateOfBirth": "Date de naissance",
+      "skinConcerns": "Préoccupations cutanées",
+      "concernsError": "Les préoccupations cutanées n'ont pas pu être chargées. Vos choix actuels seront conservés.",
+      "newsletterOptIn": "Recevoir les actualités IOMA, nouvelles gammes et conseils skin science",
+      "preferredLocale": "Langue préférée",
+      "save": "Enregistrer",
+      "saving": "Enregistrement...",
+      "saved": "Profil mis à jour."
+    },
+    "addresses": {
+      "title": "Adresses",
+      "addNew": "Ajouter une adresse",
+      "editTitle": "Modifier l'adresse",
+      "empty": "Vous n'avez pas encore enregistré d'adresse.",
+      "type": "Type",
+      "shipping": "Livraison",
+      "billing": "Facturation",
+      "label": "Nom (ex. Domicile, Bureau)",
+      "fullName": "Nom complet",
+      "phone": "Téléphone",
+      "emirate": "Émirat",
+      "city": "Ville",
+      "addressLine1": "Adresse",
+      "addressLine2": "Appartement, étage (facultatif)",
+      "setDefault": "Définir par défaut",
+      "defaultBadge": "Par défaut",
+      "edit": "Modifier",
+      "remove": "Retirer",
+      "save": "Enregistrer l'adresse",
+      "saving": "Enregistrement...",
+      "cancel": "Annuler",
+      "removeTitle": "Supprimer l'adresse ?",
+      "removeWarning": "L'adresse {label} sera définitivement retirée de vos adresses enregistrées.",
+      "removeConfirm": "Supprimer l'adresse",
+      "removing": "Suppression..."
+    },
+    "orders": {
+      "title": "Historique des commandes",
+      "empty": "Vous n'avez pas encore passé de commande.",
+      "browseShop": "Découvrir la boutique",
+      "orderNumber": "Commande",
+      "placedOn": "Passée le {date}",
+      "total": "Total",
+      "viewDetails": "Voir le détail",
+      "tracking": "Suivi",
+      "status": {
+        "order_created": "Commande passée",
+        "payment_succeeded": "Paiement confirmé",
+        "payment_failed": "Paiement refusé",
+        "cancelled_by_customer": "Annulée"
+      }
+    },
+    "security": {
+      "title": "Mot de passe & sécurité",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "passwordHint": "Au moins 10 caractères, avec une majuscule, une minuscule et un chiffre.",
+      "submit": "Changer le mot de passe",
+      "submitting": "Changement en cours...",
+      "changed": "Votre mot de passe a été changé.",
+      "incorrectCurrent": "Le mot de passe actuel est incorrect."
+    },
+    "deletion": {
+      "title": "Supprimer le compte",
+      "warning": "Ceci envoie une demande de suppression à notre équipe — votre compte n'est pas supprimé immédiatement et reste utilisable jusqu'au traitement de la demande.",
+      "reasonLabel": "Dites-nous pourquoi vous partez (facultatif)",
+      "confirm": "Demander la suppression du compte",
+      "confirmTitle": "Envoyer cette demande de suppression ?",
+      "confirmWarning": "Notre équipe recevra la demande pour examen. Votre compte restera actif jusqu'à son traitement.",
+      "confirmFinal": "Oui, envoyer la demande",
+      "cancel": "Conserver mon compte",
+      "submitting": "Envoi de la demande...",
+      "requested": "Votre demande de suppression a été reçue. Notre équipe la traitera et reviendra vers vous si nécessaire."
+    }
+  },
+  "Diagnosis": {
+    "landing": {
+      "kicker": "Diagnostic",
+      "title": "Trouvez votre routine",
+      "intro": "Deux façons d'obtenir une routine IOMA personnalisée — un questionnaire guidé, ou une analyse de peau assistée par IA à partir d'une photo.",
+      "standardCard": {
+        "title": "Questionnaire standard",
+        "description": "Répondez à quelques questions sur votre peau et votre quotidien dans le climat de Dubaï. Environ une minute.",
+        "cta": "Commencer le questionnaire"
+      },
+      "aiCard": {
+        "title": "Analyse de peau par IA",
+        "description": "Téléchargez une photo pour une lecture simulée, assistée par IA, de l'hydratation, de l'éclat et plus encore de votre peau. Nécessite un compte et votre consentement.",
+        "cta": "Commencer l'analyse IA",
+        "badge": "Démo simulée"
+      }
+    },
+    "standard": {
+      "progressLabel": "Progression du questionnaire",
+      "back": "Retour",
+      "next": "Suivant",
+      "submit": "Voir ma routine",
+      "submitting": "Recherche de votre routine...",
+      "errorGeneric": "Nous n'avons pas pu traiter vos réponses. Veuillez réessayer.",
+      "questions": {
+        "skinType": {
+          "title": "Comment décririez-vous votre peau ?",
+          "options": {
+            "dry": "Sèche",
+            "oily": "Grasse",
+            "combination": "Mixte",
+            "normal": "Normale",
+            "sensitive": "Sensible"
+          }
+        },
+        "hydrationLevel": {
+          "title": "En fin de journée, votre peau se sent généralement...",
+          "options": {
+            "tight_or_dry": "Tiraillée ou sèche",
+            "comfortable": "Confortable",
+            "well_hydrated": "Bien hydratée"
+          }
+        },
+        "mainConcern": {
+          "title": "Quelle est votre principale préoccupation cutanée en ce moment ?",
+          "options": {
+            "dehydration": "Déshydratation",
+            "fatigue-dullness": "Fatigue et teint terne",
+            "first-signs-of-aging": "Premiers signes de l'âge",
+            "sensitivity": "Sensibilité",
+            "blemishes": "Imperfections",
+            "shine-control": "Contrôle de la brillance",
+            "dark-spots": "Taches brunes"
+          }
+        },
+        "sunExposure": {
+          "title": "Quelle est votre exposition quotidienne au soleil ?",
+          "options": { "low": "Faible", "moderate": "Modérée", "high": "Élevée" }
+        },
+        "indoorClimateExposure": {
+          "title": "Combien de temps passez-vous dans des espaces climatisés ?",
+          "options": { "low": "Peu", "moderate": "Modérément", "high": "Beaucoup" }
+        }
+      }
+    },
+    "result": {
+      "kicker": "Votre résultat",
+      "title": "Votre routine recommandée",
+      "skinType": "Type de peau",
+      "hydrationScore": "Score d'hydratation",
+      "priorityConcerns": "Préoccupations prioritaires",
+      "recommendedRange": "Gamme recommandée",
+      "morningRoutine": "Routine du matin",
+      "eveningRoutine": "Routine du soir",
+      "noEveningProducts": "Cette gamme n'a pas encore d'étape du soir dédiée — votre routine du matin s'en charge.",
+      "noMorningProducts": "Cette gamme n'a pas encore d'étape du matin dédiée — votre routine du soir s'en charge.",
+      "addToCart": "Ajouter la routine au panier",
+      "addingToCart": "Ajout en cours...",
+      "addedToCart": "Ajouté à votre panier.",
+      "addToCartError": "Nous n'avons pas pu ajouter cette routine à votre panier. Veuillez réessayer.",
+      "viewCart": "Voir le panier",
+      "loadError": "Nous n'avons pas pu charger ce résultat.",
+      "startOver": "Refaire le questionnaire"
+    },
+    "ai": {
+      "signInPrompt": "Connectez-vous pour utiliser l'analyse de peau par IA — elle enregistre votre résultat et votre image sur votre compte.",
+      "signInCta": "Se connecter",
+      "consent": {
+        "title": "Avant de télécharger une photo",
+        "body": "Cette analyse IA est une démo simulée, pas un diagnostic médical. Votre photo est stockée de manière privée et utilisée uniquement pour générer ce résultat. Vous pouvez supprimer votre photo et votre résultat à tout moment.",
+        "agree": "Je comprends et j'accepte",
+        "error": "Nous n'avons pas pu enregistrer votre consentement. Veuillez réessayer."
+      },
+      "upload": {
+        "title": "Téléchargez une photo",
+        "instructions": "Une photo nette, bien éclairée et de face fonctionne mieux. JPEG, PNG ou WEBP, jusqu'à 8 Mo.",
+        "chooseFile": "Choisir une photo",
+        "changeFile": "Choisir une autre photo",
+        "invalidType": "Veuillez choisir une image JPEG, PNG ou WEBP.",
+        "tooLarge": "Cette image dépasse 8 Mo. Veuillez choisir un fichier plus petit.",
+        "submit": "Analyser ma peau",
+        "submitting": "Téléchargement...",
+        "error": "Nous n'avons pas pu télécharger votre photo. Veuillez réessayer."
+      },
+      "processing": {
+        "title": "Analyse de votre photo",
+        "body": "Cela prend généralement quelques secondes."
+      },
+      "result": {
+        "kicker": "Votre analyse IA",
+        "title": "Votre résultat simulé",
+        "simulatedBadge": "Résultat simulé — pas un diagnostic médical",
+        "disclaimer": "Cette analyse IA est une simulation de démonstration à titre illustratif uniquement. Elle ne diagnostique aucune condition cutanée et ne remplace pas l'avis d'un dermatologue ou d'un professionnel de la peau.",
+        "indicators": "Indicateurs cutanés",
+        "recommendedRange": "Gamme recommandée",
+        "delete": "Supprimer cette analyse",
+        "deleteConfirmTitle": "Supprimer cette analyse ?",
+        "deleteConfirmBody": "Ceci supprime définitivement votre photo et votre résultat. Cette action est irréversible.",
+        "deleteConfirmCta": "Supprimer définitivement",
+        "cancel": "Annuler",
+        "deleteError": "Nous n'avons pas pu supprimer cette analyse. Veuillez réessayer.",
+        "failedTitle": "Échec de l'analyse",
+        "failedBody": "Une erreur s'est produite lors du traitement de votre photo. Veuillez réessayer.",
+        "tryAgain": "Réessayer"
+      },
+      "indicatorLabels": {
+        "hydration": "Hydratation",
+        "fineLines": "Ridules",
+        "wrinkles": "Rides",
+        "pores": "Pores",
+        "spots": "Taches",
+        "unevenTone": "Teint irrégulier",
+        "redness": "Rougeurs",
+        "imperfections": "Imperfections",
+        "texture": "Texture",
+        "radiance": "Éclat",
+        "firmness": "Fermeté"
+      }
+    },
+    "history": {
+      "title": "Votre historique de diagnostic",
+      "empty": "Vous n'avez pas encore fait de diagnostic.",
+      "signInPrompt": "Connectez-vous pour voir votre historique de diagnostic.",
+      "signInCta": "Se connecter",
+      "standardLabel": "Questionnaire",
+      "aiLabel": "Analyse IA",
+      "viewResult": "Voir le résultat"
+    },
+    "appointments": {
+      "title": "Vos rendez-vous",
+      "noAppointments": "Vous n'avez pas encore de rendez-vous.",
+      "bookFirst": "Réservez votre premier rendez-vous",
+      "confirmCancel": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?",
+      "reschedule": "Reporter",
+      "cancel": "Annuler",
+      "cancelling": "Annulation..."
+    }
+  },
+  "Partners": {
+    "kicker": "Trouver un partenaire",
+    "title": "Où trouver IOMA aux Émirats.",
+    "subtitle": "Comptoirs de diagnostic, spas et instituts partenaires à travers les Émirats.",
+    "filterEmirate": "Filtrer par émirat",
+    "filterAllEmirates": "Tous les émirats",
+    "filterType": "Filtrer par type",
+    "filterTypes": {
+      "all": "Tous les types",
+      "spa": "Spa",
+      "clinic": "Clinique",
+      "institute": "Institut de beauté",
+      "hotel": "Hôtel",
+      "retail": "Vente au détail"
+    },
+    "diagnosisOnly": "Diagnostic disponible",
+    "useMyLocation": "Utiliser ma position",
+    "noPartners": "Aucun partenaire trouvé correspondant à vos critères.",
+    "viewDetails": "Voir les détails"
+  },
+  "PartnerDetail": {
+    "notFound": "Partenaire introuvable.",
+    "backToPartners": "Retour aux partenaires",
+    "about": "À propos",
+    "contact": "Contact",
+    "address": "Adresse",
+    "phone": "Téléphone",
+    "diagnosisAvailable": "Diagnostic cutané disponible",
+    "diagnosisDescription": "Ce partenaire propose des séances de diagnostic cutané IOMA en personne.",
+    "services": "Services",
+    "noServices": "Aucun service listé.",
+    "book": "Réserver",
+    "bookAppointment": "Prendre rendez-vous",
+    "types": {
+      "spa": "Spa",
+      "clinic": "Clinique",
+      "institute": "Institut de beauté",
+      "hotel": "Hôtel",
+      "retail": "Vente au détail",
+      "diagnostic": "Centre de diagnostic",
+      "distributor": "Distributeur"
+    }
+  },
+  "Booking": {
+    "title": "Prendre rendez-vous",
+    "progress": "Progression de la réservation",
+    "steps": {
+      "partner": "Partenaire",
+      "service": "Service",
+      "datetime": "Date et heure",
+      "confirm": "Confirmer"
+    },
+    "selectPartner": "Choisir un partenaire",
+    "selectService": "Choisir un service",
+    "selectDateTime": "Choisir une date et un horaire",
+    "selectDate": "Date",
+    "selectTime": "Heure",
+    "confirmBooking": "Vérifier et confirmer",
+    "partner": "Partenaire",
+    "service": "Service",
+    "date": "Date",
+    "time": "Heure",
+    "duration": "Durée",
+    "notes": "Notes (optionnel)",
+    "notesPlaceholder": "Demandes spéciales ou notes pour votre rendez-vous...",
+    "select": "Choisir",
+    "continue": "Continuer",
+    "back": "Retour",
+    "noSlots": "Aucun créneau disponible pour cette date.",
+    "noServices": "Aucun service disponible chez ce partenaire.",
+    "servicesAvailable": "services disponibles",
+    "booking": "Réservation...",
+    "confirmBookingCta": "Confirmer la réservation",
+    "authRequired": "Connectez-vous pour réserver",
+    "authRequiredMessage": "Vous avez besoin d'un compte pour prendre rendez-vous.",
+    "signIn": "Se connecter",
+    "errors": {
+      "bookingFailed": "Nous n'avons pas pu réserver votre rendez-vous. Veuillez réessayer.",
+      "slotTaken": "Ce créneau n'est plus disponible. Veuillez en choisir un autre."
+    },
+    "reschedule": {
+      "title": "Reporter le rendez-vous",
+      "selectDate": "Nouvelle date",
+      "selectTime": "Nouvel horaire",
+      "back": "Retour",
+      "confirmReschedule": "Confirmer le report",
+      "rescheduling": "Report en cours...",
+      "notFound": "Rendez-vous introuvable.",
+      "errors": {
+        "rescheduleFailed": "Nous n'avons pas pu reporter votre rendez-vous. Veuillez réessayer."
+      }
+    }
+  },
+  "BookingConfirmation": {
+    "title": "Rendez-vous confirmé",
+    "subtitle": "Nous vous avons envoyé une confirmation. Vous pouvez gérer votre rendez-vous depuis votre compte.",
+    "notFound": "Rendez-vous introuvable.",
+    "backToBooking": "Retour à la réservation",
+    "partner": "Partenaire",
+    "location": "Lieu",
+    "service": "Service",
+    "date": "Date",
+    "time": "Heure",
+    "status": "Statut",
+    "viewAppointments": "Voir mes rendez-vous",
+    "backToHome": "Retour à l'accueil"
+  },
+  "Professionals": {
+    "apply": {
+      "title": "Candidature Professionnelle",
+      "subtitle": "Remplissez le formulaire ci-dessous pour demander l'accès au portail B2B. Notre équipe examinera votre candidature dans les 48 heures.",
+      "sections": {
+        "company": "Informations sur l'entreprise",
+        "contact": "Coordonnées",
+        "business": "Détails de l'activité"
+      },
+      "fields": {
+        "companyName": "Nom de l'entreprise",
+        "contactPerson": "Personne de contact",
+        "businessType": "Type d'activité",
+        "businessTypePlaceholder": "Sélectionner le type",
+        "tradeLicence": "Numéro de licence commerciale",
+        "vatNumber": "Numéro de TVA",
+        "optional": "optionnel",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "address": "Adresse",
+        "emirate": "Émirat",
+        "emiratePlaceholder": "Sélectionner l'émirat",
+        "city": "Ville",
+        "website": "Site web",
+        "socialMedia": "Réseaux sociaux",
+        "locationsCount": "Nombre de succursales",
+        "expectedOrderVolume": "Volume mensuel prévu",
+        "message": "Message complémentaire"
+      },
+      "status": {
+        "submitted": "Soumise le",
+        "company": "Entreprise",
+        "type": "Type d'activité"
+      },
+      "actions": {
+        "submit": "Soumettre la candidature",
+        "submitting": "Envoi en cours...",
+        "cancel": "Annuler",
+        "newApplication": "Nouvelle candidature"
+      },
+      "success": {
+        "title": "Candidature Soumise",
+        "description": "Merci pour votre candidature. Notre équipe l'examinera et vous répondra dans les 48 heures.",
+        "backToHome": "Retour à l'accueil"
+      }
+    }
+  },
+  "Pro": {
+    "nav": {
+      "label": "Portail Professionnel",
+      "portal": "Portail",
+      "dashboard": "Tableau de bord",
+      "catalog": "Catalogue",
+      "orders": "Commandes",
+      "trainings": "Formations",
+      "protocols": "Protocoles"
+    },
+    "trainings": {
+      "title": "Formations & Certifications",
+      "subtitle": "Réservez des sessions de formation professionnelle pour vos équipes.",
+      "bookSession": "Réserver une session",
+      "booking": "Réservation...",
+      "booked": "Session réservée",
+      "fullyBooked": "Complet",
+      "myBookings": "Mes formations programmées",
+      "cancelBooking": "Annuler",
+      "cancelling": "Annulation...",
+      "noSessions": "Aucune session à venir disponible."
+    },
+    "protocols": {
+      "title": "Protocoles de Soin",
+      "subtitle": "Accédez aux protocoles de soin en cabine officiels IOMA Paris.",
+      "allCategories": "Toutes les catégories",
+      "facial": "Protocoles Visage",
+      "body": "Protocoles Corps",
+      "diagnostic": "Protocoles Diagnostic",
+      "downloadPdf": "Télécharger le PDF du protocole",
+      "watchVideo": "Regarder la vidéo technique",
+      "noProtocols": "Aucun protocole trouvé."
+    },
+    "dashboard": {
+      "title": "Bienvenue, {name}",
+      "subtitle": "Aperçu de votre portail B2B",
+      "stats": {
+        "totalOrders": "Total commandes",
+        "totalSpent": "Total dépensé",
+        "catalog": "Actions rapides",
+        "browseCTA": "Parcourir le catalogue"
+      },
+      "recentOrders": "Commandes récentes",
+      "noOrders": "Aucune commande pour le moment. Parcourez le catalogue pour passer votre première commande."
+    },
+    "catalog": {
+      "title": "Catalogue Produits",
+      "subtitle": "Parcourez notre gamme professionnelle avec les prix B2B.",
+      "searchPlaceholder": "Rechercher des produits...",
+      "addToCart": "Ajouter au panier",
+      "adding": "Ajout en cours...",
+      "outOfStock": "Rupture de stock",
+      "noProducts": "Aucun produit trouvé.",
+      "errors": {
+        "moq": "La quantité minimum est {moq}.",
+        "failed": "Échec de l'ajout au panier."
+      },
+      "success": {
+        "added": "Ajouté au panier"
+      }
+    },
+    "orders": {
+      "title": "Mes Commandes",
+      "subtitle": "Consultez et suivez vos commandes B2B.",
+      "noOrders": "Aucune commande pour le moment.",
+      "browseCatalog": "Parcourir le catalogue"
+    },
+    "pending": {
+      "title": "Candidature en cours d'examen",
+      "description": "Votre candidature professionnelle est en cours d'examen par notre équipe. Vous serez informé une fois approuvée.",
+      "viewApplication": "Voir le statut"
+    },
+    "accessDenied": {
+      "title": "Accès professionnel requis",
+      "description": "Vous avez besoin d'un compte professionnel approuvé pour accéder au portail B2B.",
+      "learnMore": "Devenir partenaire"
+    }
+  },
+  "Admin": {
+    "professionals": {
+      "title": "Candidatures Professionnelles",
+      "subtitle": "Examinez et gérez les candidatures pour l'accès au portail B2B.",
+      "field": {
+        "businessType": "Type d'activité",
+        "emirate": "Émirat",
+        "tradeLicence": "Licence commerciale",
+        "locationsCount": "Succursales",
+        "expectedVolume": "Volume prévu",
+        "submitted": "Soumise le",
+        "documents": "Documents"
+      },
+      "actions": {
+        "approve": "Approuver",
+        "reject": "Rejeter"
+      },
+      "toast": {
+        "approved": "Candidature approuvée avec succès.",
+        "rejected": "Candidature rejetée.",
+        "rejectionReasonRequired": "Le motif du rejet est requis.",
+        "error": "Une erreur s'est produite."
+      },
+      "dialog": {
+        "approveTitle": "Approuver la candidature",
+        "rejectTitle": "Rejeter la candidature",
+        "notes": "Notes d'examen",
+        "approvePlaceholder": "Notes optionnelles pour le candidat...",
+        "rejectPlaceholder": "Motif du rejet (requis)...",
+        "cancel": "Annuler",
+        "processing": "Traitement...",
+        "confirmApprove": "Approuver",
+        "confirmReject": "Rejeter"
+      },
+      "noApplications": "Aucune candidature en attente d'examen."
+    }
+  }
+}

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+build/
+out/
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (local dev data)
+infrastructure/docker/volumes/
+
+# MinIO / Mongo local data
+data/mongo/
+data/minio/
+data/redis/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Misc generated
+apps/web/next-env.d.ts
