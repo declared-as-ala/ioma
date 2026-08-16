@@ -1,39 +1,35 @@
 version: "3.8"
 
-services:
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: ioma-prod-nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
-    depends_on:
-      web:
-        condition: service_started
-      api:
-        condition: service_healthy
+# Deployed on a SHARED VPS already running many other unrelated client
+# projects behind an existing Nginx Proxy Manager instance (ports 80/443
+# are already owned by that container — never bind them here). Web/API are
+# published directly on dedicated host ports instead until a real domain
+# is pointed at this project and a proxy host is added in NPM for it. See
+# DEPLOYMENT.md.
+#
+# Env var names here MUST match apps/api/src/config/env.validation.ts
+# exactly — a previous draft of this file used names (MONGODB_URI,
+# JWT_SECRET, REDIS_HOST/REDIS_PORT) that don't exist in that schema and
+# would have crash-looped the container on boot (the schema fails loudly
+# on unrecognized/missing required vars, by design — see SECURITY.md).
+# Real values are supplied via the `.env.prod` file on the host, never
+# committed — see `env_file` below.
 
+services:
   web:
     build:
       context: ../..
       dockerfile: infrastructure/docker/web.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://ioma-paris.com/api
-        NEXT_PUBLIC_SITE_URL: https://ioma-paris.com
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: ioma-prod-web
     restart: always
+    env_file:
+      - ../../.env.prod
     environment:
       NODE_ENV: production
-      PORT: 3000
-      NEXT_PUBLIC_API_URL: https://ioma-paris.com/api
-      NEXT_PUBLIC_SITE_URL: https://ioma-paris.com
-    expose:
-      - "3000"
+    ports:
+      - "${WEB_HOST_PORT:-3200}:3000"
     depends_on:
       api:
         condition: service_healthy
@@ -44,21 +40,17 @@ services:
       dockerfile: infrastructure/docker/api.Dockerfile
     container_name: ioma-prod-api
     restart: always
+    env_file:
+      - ../../.env.prod
     environment:
       NODE_ENV: production
-      PORT: 3000
-      MONGODB_URI: mongodb://mongo:27017/ioma
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      MONGO_URI: mongodb://mongo:27017/ioma
+      REDIS_URL: redis://redis:6379
       MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
+      MINIO_PORT: "9000"
       MINIO_USE_SSL: "false"
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-ioma_admin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-ioma_secret_key_change_in_prod}
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_production}
-      JWT_EXPIRES_IN: 7d
-    expose:
-      - "3000"
+    ports:
+      - "${API_HOST_PORT:-4200}:4000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -66,11 +58,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   mongo:
     image: mongo:7.0
@@ -101,8 +88,8 @@ services:
     container_name: ioma-prod-minio
     restart: always
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-ioma_admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-ioma_secret_key_change_in_prod}
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio-prod-data:/data
     command: server /data --console-address ":9001"
