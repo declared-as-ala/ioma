@@ -326,7 +326,14 @@
     "searchPlaceholder": "Rechercher un produit",
     "noResults": "Aucun produit ne correspond à ces filtres pour le moment.",
     "priceFrom": "À partir de {price}",
-    "viewProduct": "Voir le produit"
+    "viewProduct": "Voir le produit",
+    "compareCount": "{count} produits sélectionnés",
+    "clearCompare": "Effacer",
+    "compareAction": "Comparer",
+    "compareTitle": "Comparatif Produits",
+    "compareSubtitle": "Comparez les ingrédients actifs, besoins de peau et étapes de routine.",
+    "compareEmpty": "Aucun produit sélectionné pour comparaison.",
+    "compareEmptyBody": "Parcourez la boutique et sélectionnez jusqu'à 3 produits à comparer."
   },
   "Product": {
     "routineStep": {
@@ -340,9 +347,11 @@
     "addToCart": "Ajouter au panier",
     "addedToCart": "Ajouté au panier",
     "outOfStock": "Rupture de stock",
-    "wishlistAdd": "Ajouter à ma liste d'envies",
-    "wishlistRemove": "Retirer de ma liste d'envies",
-    "wishlistSignInRequired": "Connectez-vous pour enregistrer ce produit dans votre liste d'envies."
+    "wishlistAdd": "Ajouter aux favoris",
+    "wishlistRemove": "Retirer des favoris",
+    "wishlistSignInRequired": "Connectez-vous pour enregistrer ce produit dans vos favoris.",
+    "addToCompare": "Comparer",
+    "removeFromCompare": "En comparaison"
   },
   "Cart": {
     "title": "Votre panier",

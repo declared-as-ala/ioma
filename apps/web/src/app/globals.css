@@ -90,6 +90,15 @@
   /* Letter tracking per charter (titles/subtitles +50, claim +80) */
   --tracking-heading: 0.05em;
   --tracking-claim: 0.08em;
+
+  /* z-index scale */
+  --z-index-base: 0;
+  --z-index-sticky-header: 100;
+  --z-index-dropdown: 110;
+  --z-index-drawer: 200;
+  --z-index-modal: 300;
+  --z-index-toast: 400;
+  --z-index-tooltip: 500;
 }
 
 @layer base {

@@ -15,6 +15,7 @@ import { ToastContainer } from "@/components/ui/toast";
 import { BottomTabBar } from "@/components/layout/bottom-tab-bar";
 import { BottomTabBarSpacer } from "@/components/layout/bottom-tab-bar-spacer";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
+import { CompareBar } from "@/components/shop/compare-bar";
 import "../globals.css";
 
 // Gotham/Futura PT substitutes until licensed font files are supplied (see
@@ -76,6 +77,7 @@ export default async function LocaleLayout({
             <Footer />
             <BottomTabBarSpacer />
             <CartDrawer />
+            <CompareBar />
             <ToastContainer />
             <BottomTabBar />
           </QueryProvider>

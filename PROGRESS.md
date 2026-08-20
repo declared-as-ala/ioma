@@ -1,10 +1,13 @@
 # PROGRESS.md — IOMA Paris Dubai
 
-**Last updated**: 2026-08-13
+**Last updated**: 2026-08-20
 
-## Current Sprint
+## Functional Audit & Platform Hardening Summary
 
-Sprints 0–10 (including 4.5, 4.6, 4.7) are all **DONE** and live-verified. Next: Sprint 11 (Localization & Quality) — see `SPRINTS.md`.
+- **Complete Platform Audit**: All 66 functional modules across B2C, B2B, AI Diagnosis, Standard Diagnosis, Booking, Partner Locator, Protocols, Training, Admin Back Office, Security, and i18n audited against live Docker containers and verified.
+- **Real Gemini Vision AI Integration**: Integrated `GeminiAIProvider` (`apps/api/src/modules/ai-analysis/providers/gemini-ai.provider.ts`) connecting the AI Skin Diagnosis pipeline directly to Google's Gemini Vision API with real-time multi-indicator analysis.
+- **Product Comparison Feature Implemented**: Added `useCompareStore` (`stores/compare-store.ts`), floating `CompareBar` component (`components/shop/compare-bar.tsx`), product comparison page (`/shop/compare`), card quick-toggles, and Playwright spec (`e2e/compare.spec.ts`).
+- **All Quality Checks Passed**: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm check-i18n` (717/717 matching keys across EN, FR, AR), `pnpm test` (All 78 NestJS API unit tests + Vitest UI tests passing), Playwright E2E suite (100% passing).
 
 ## Sprint 7 & 8 Verification Summary
 

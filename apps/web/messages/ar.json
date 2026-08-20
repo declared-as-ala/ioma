@@ -316,7 +316,14 @@
     "searchPlaceholder": "ابحثي عن منتج",
     "noResults": "لا توجد منتجات مطابقة لهذه الفلاتر حاليًا.",
     "priceFrom": "يبدأ من {price}",
-    "viewProduct": "عرض المنتج"
+    "viewProduct": "عرض المنتج",
+    "compareCount": "تم تحديد {count} منتجات",
+    "clearCompare": "مسح",
+    "compareAction": "قارن الآن",
+    "compareTitle": "مقارنة المنتجات",
+    "compareSubtitle": "قارني المكونات الفعالة واحتياجات البشرة وخطوات الروتين جنباً إلى جنب.",
+    "compareEmpty": "لم يتم تحديد أي منتجات للمقارنة.",
+    "compareEmptyBody": "تصفحي المتجر وحددي حتى 3 منتجات لمقارنتها."
   },
   "Product": {
     "routineStep": {
@@ -332,7 +339,9 @@
     "outOfStock": "غير متوفر حاليًا",
     "wishlistAdd": "أضيفي إلى قائمة الرغبات",
     "wishlistRemove": "إزالة من قائمة الرغبات",
-    "wishlistSignInRequired": "سجّلي الدخول لحفظ هذا المنتج في قائمة رغباتك."
+    "wishlistSignInRequired": "سجّلي الدخول لحفظ هذا المنتج في قائمة رغباتك.",
+    "addToCompare": "مقارنة",
+    "removeFromCompare": "في المقارنة"
   },
   "Cart": {
     "title": "سلتك",

@@ -69,7 +69,7 @@ export function SearchDrawer() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-modal flex items-start justify-center pt-16 sm:pt-24 px-4">
+        <div className="fixed inset-0 z-[300] flex items-start justify-center pt-16 sm:pt-24 px-4">
           {/* Backdrop */}
           <motion.div
             className="fixed inset-0 bg-black/50 backdrop-blur-xs"

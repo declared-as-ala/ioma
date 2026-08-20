@@ -46,7 +46,7 @@ export function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 inset-x-0 z-[100] border-b border-border bg-background transition-shadow duration-200 ${
+        className={`fixed top-0 inset-x-0 z-30 border-b border-border bg-background transition-shadow duration-200 ${
           isScrolled ? "shadow-md backdrop-blur-md bg-background/95" : ""
         }`}
       >

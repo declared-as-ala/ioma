@@ -316,7 +316,14 @@
     "searchPlaceholder": "Search products",
     "noResults": "No products match these filters yet.",
     "priceFrom": "From {price}",
-    "viewProduct": "View product"
+    "viewProduct": "View product",
+    "compareCount": "{count} products selected",
+    "clearCompare": "Clear",
+    "compareAction": "Compare Now",
+    "compareTitle": "Product Comparison",
+    "compareSubtitle": "Compare active ingredients, skin concerns, and routine steps side-by-side.",
+    "compareEmpty": "No products selected for comparison.",
+    "compareEmptyBody": "Browse the shop and select up to 3 products to compare."
   },
   "Product": {
     "routineStep": {
@@ -332,7 +339,9 @@
     "outOfStock": "Out of stock",
     "wishlistAdd": "Add to wishlist",
     "wishlistRemove": "Remove from wishlist",
-    "wishlistSignInRequired": "Sign in to save this to your wishlist."
+    "wishlistSignInRequired": "Sign in to save this to your wishlist.",
+    "addToCompare": "Add to compare",
+    "removeFromCompare": "In comparison"
   },
   "Cart": {
     "title": "Your bag",

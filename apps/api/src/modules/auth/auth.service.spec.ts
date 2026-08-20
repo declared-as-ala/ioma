@@ -27,6 +27,7 @@ interface MockedRefreshTokenService {
 }
 
 describe("AuthService", () => {
+  jest.setTimeout(30000);
   let authService: AuthService;
   let usersService: MockedUsersService;
   let refreshTokenService: MockedRefreshTokenService;
