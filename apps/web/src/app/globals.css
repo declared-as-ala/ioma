@@ -198,3 +198,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Leaflet Custom Marker & Popup Overrides */
+.leaflet-marker-icon.custom-ioma-pin-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+

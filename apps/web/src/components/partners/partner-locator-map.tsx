@@ -56,12 +56,70 @@ export function PartnerLocatorMap({
       partners.forEach((partner) => {
         if (!partner.coordinates) return;
 
-        const marker = L.marker([partner.coordinates.lat, partner.coordinates.lng])
+        const isSelected = selectedPartner?.id === partner.id;
+
+        const customPinIcon = L.divIcon({
+          className: "custom-ioma-pin-container",
+          html: `
+            <div style="
+              position: relative;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              transform: translate(-50%, -100%);
+              cursor: pointer;
+            ">
+              <div style="
+                width: 32px;
+                height: 32px;
+                background: ${isSelected ? "#000000" : "#1a1a1a"};
+                border: 2px solid ${isSelected ? "#aa9feb" : "#ffffff"};
+                border-radius: 50% 50% 50% 0;
+                transform: rotate(-45deg);
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.2s ease, background-color 0.2s ease;
+              ">
+                <div style="
+                  width: 10px;
+                  height: 10px;
+                  background: ${isSelected ? "#aa9feb" : "#ffffff"};
+                  border-radius: 50%;
+                  transform: rotate(45deg);
+                "></div>
+              </div>
+              <div style="
+                margin-top: 4px;
+                background: rgba(15, 15, 15, 0.9);
+                color: #ffffff;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.03em;
+                white-space: nowrap;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                border: 1px solid rgba(255,255,255,0.15);
+              ">
+                ${partner.name}
+              </div>
+            </div>
+          `,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0],
+        });
+
+        const marker = L.marker([partner.coordinates.lat, partner.coordinates.lng], {
+          icon: customPinIcon,
+        })
           .addTo(mapInstanceRef.current as L.Map)
           .bindPopup(
-            `<div>
-              <p style="font-weight:600;margin:0 0 4px">${partner.name}</p>
-              <p style="font-size:12px;color:#666;margin:0">${partner.city} — ${partner.type}</p>
+            `<div style="font-family: inherit; padding: 4px;">
+              <p style="font-weight:600;font-size:14px;margin:0 0 4px;color:#000;">${partner.name}</p>
+              <p style="font-size:12px;color:#666;margin:0 0 8px;">${partner.city} — ${partner.type.replace("_", " ")}</p>
+              <a href="/partners/${partner.slug}" style="font-size:12px;color:#000;text-decoration:underline;font-weight:500;">View details & book &rarr;</a>
             </div>`,
           )
           .on("click", () => onSelectPartner(partner));
@@ -76,12 +134,12 @@ export function PartnerLocatorMap({
             .filter((p) => p.coordinates)
             .map((p) => [p.coordinates.lat, p.coordinates.lng] as [number, number]),
         );
-        (mapInstanceRef.current as L.Map).fitBounds(bounds, { padding: [40, 40] });
+        (mapInstanceRef.current as L.Map).fitBounds(bounds, { padding: [50, 50] });
       }
     };
 
     initMap();
-  }, [partners, onSelectPartner, userLocation]);
+  }, [partners, selectedPartner, onSelectPartner, userLocation]);
 
   // Update map center when user location changes
   useEffect(() => {
