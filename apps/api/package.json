@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "seed": "ts-node src/seed/seed.ts",
-    "seed:official": "ts-node src/scripts/import-ioma-catalog.ts",
-    "import:catalog": "ts-node src/scripts/import-ioma-catalog.ts",
+    "seed:official": "ts-node src/scripts/import-ioma-catalog.ts --apply",
+    "import:catalog": "ts-node src/scripts/import-ioma-catalog.ts --apply",
     "migrate": "ts-node src/migrations/run.ts",
     "clean": "rimraf dist"
   },

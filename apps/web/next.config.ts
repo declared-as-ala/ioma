@@ -32,6 +32,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    const apiTarget = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiTarget}/api/:path*`,
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

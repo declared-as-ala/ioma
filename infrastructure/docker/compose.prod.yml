@@ -1,33 +1,17 @@
-version: "3.8"
-
-# Deployed on a SHARED VPS already running many other unrelated client
-# projects behind an existing Nginx Proxy Manager instance (ports 80/443
-# are already owned by that container — never bind them here). Web/API are
-# published directly on dedicated host ports instead until a real domain
-# is pointed at this project and a proxy host is added in NPM for it. See
-# DEPLOYMENT.md.
-#
-# Env var names here MUST match apps/api/src/config/env.validation.ts
-# exactly — a previous draft of this file used names (MONGODB_URI,
-# JWT_SECRET, REDIS_HOST/REDIS_PORT) that don't exist in that schema and
-# would have crash-looped the container on boot (the schema fails loudly
-# on unrecognized/missing required vars, by design — see SECURITY.md).
-# Real values are supplied via the `.env.prod` file on the host, never
-# committed — see `env_file` below.
-
 services:
   web:
     build:
       context: ../..
       dockerfile: infrastructure/docker/web.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     container_name: ioma-prod-web
     restart: always
     env_file:
       - ../../.env.prod
     environment:
       NODE_ENV: production
+      INTERNAL_API_URL: http://api:4000
     ports:
       - "${WEB_HOST_PORT:-3200}:3000"
     depends_on:
