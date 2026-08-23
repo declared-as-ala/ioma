@@ -16,14 +16,19 @@ import { MINIO_CLIENT } from "./storage.constants";
     {
       provide: MINIO_CLIENT,
       inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvConfig, true>) =>
-        new Client({
-          endPoint: config.get("MINIO_ENDPOINT", { infer: true }),
-          port: config.get("MINIO_PORT", { infer: true }),
-          useSSL: config.get("MINIO_USE_SSL", { infer: true }),
-          accessKey: config.get("MINIO_ACCESS_KEY", { infer: true }),
-          secretKey: config.get("MINIO_SECRET_KEY", { infer: true }),
-        }),
+      useFactory: (config: ConfigService<EnvConfig, true>) => {
+        const accessKey =
+          config.get("MINIO_ACCESS_KEY", { infer: true }) || "ioma_minio_admin";
+        const secretKey =
+          config.get("MINIO_SECRET_KEY", { infer: true }) || "ioma_minio_secret_2026";
+        return new Client({
+          endPoint: config.get("MINIO_ENDPOINT", { infer: true }) || "minio",
+          port: Number(config.get("MINIO_PORT", { infer: true }) || 9000),
+          useSSL: String(config.get("MINIO_USE_SSL", { infer: true })) === "true",
+          accessKey,
+          secretKey,
+        });
+      },
     },
     StorageService,
   ],

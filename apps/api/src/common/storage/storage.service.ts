@@ -28,6 +28,17 @@ export class StorageService {
     return bucket === "public" ? this.publicBucket : this.privateBucket;
   }
 
+  private async ensureBucket(bucketName: string): Promise<void> {
+    try {
+      const exists = await this.client.bucketExists(bucketName);
+      if (!exists) {
+        await this.client.makeBucket(bucketName);
+      }
+    } catch {
+      // Ignore if bucket already exists or cannot be created immediately
+    }
+  }
+
   // Object keys are server-generated (never the client's original filename)
   // so a hostile filename can't path-traverse or collide — see SECURITY.md
   // "File uploads".
@@ -41,7 +52,9 @@ export class StorageService {
     data: Buffer,
     mimeType: string,
   ): Promise<void> {
-    await this.client.putObject(this.bucketName(bucket), objectKey, data, data.length, {
+    const name = this.bucketName(bucket);
+    await this.ensureBucket(name);
+    await this.client.putObject(name, objectKey, data, data.length, {
       "Content-Type": mimeType,
     });
   }

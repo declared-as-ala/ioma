@@ -13,8 +13,8 @@ export const envSchema = z.object({
 
   MINIO_ENDPOINT: z.string().min(1),
   MINIO_PORT: z.coerce.number(),
-  MINIO_ACCESS_KEY: z.string().min(1),
-  MINIO_SECRET_KEY: z.string().min(1),
+  MINIO_ACCESS_KEY: z.string().default("ioma_minio_admin"),
+  MINIO_SECRET_KEY: z.string().default("ioma_minio_secret_2026"),
   // NOT z.coerce.boolean() — Zod's coercion is just JS `Boolean(value)`,
   // and Boolean("false") is `true` (any non-empty string is truthy). That
   // silently flipped MINIO_USE_SSL=false in .env to `true`, making the
