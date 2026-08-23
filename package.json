@@ -12,8 +12,10 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "check-i18n": "npx tsx packages/infra-scripts/src/check-i18n.ts",
     "clean": "turbo run clean",
+    "seed": "pnpm --filter @ioma/api seed",
+    "seed:official": "pnpm --filter @ioma/api seed:official",
+    "import:catalog": "pnpm --filter @ioma/api import:catalog",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore",
     "prepare": "husky"
   },
