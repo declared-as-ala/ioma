@@ -55,8 +55,18 @@ export class CartService {
     cartType: "b2c" | "b2b" = "b2c",
     priceListId?: string,
   ) {
-    const variant = await this.variantModel.findOne({ sku: dto.sku });
-    if (!variant) throw new NotFoundException("Product variant not found.");
+    const skuTarget = dto.sku.trim();
+    const variant =
+      (await this.variantModel.findOne({ sku: skuTarget })) ||
+      (await this.variantModel.findOne({
+        sku: {
+          $regex: new RegExp(
+            `^${skuTarget.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")}$`,
+            "i",
+          ),
+        },
+      }));
+    if (!variant) throw new NotFoundException(`Product variant "${dto.sku}" not found.`);
     if (
       variant.quantityOnHand - variant.quantityReserved < dto.qty &&
       !variant.backorderAllowed
