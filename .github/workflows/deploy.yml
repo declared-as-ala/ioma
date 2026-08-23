@@ -1,0 +1,87 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  ci-check:
+    name: Run Quality & Test Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.31.0
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Typecheck
+        run: pnpm typecheck
+
+      - name: Run i18n Audit
+        run: pnpm check-i18n
+
+      - name: Run API Unit Tests
+        run: pnpm --filter @ioma/api test
+
+  deploy:
+    name: Deploy to Production VPS
+    needs: [ci-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME || 'root' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            echo "🚀 Starting deployment on VPS..."
+            
+            # Find project directory
+            if [ -n "${{ secrets.VPS_PROJECT_DIR }}" ]; then
+              TARGET_DIR="${{ secrets.VPS_PROJECT_DIR }}"
+            elif [ -d "/root/ioma" ]; then
+              TARGET_DIR="/root/ioma"
+            elif [ -d "$HOME/ioma" ]; then
+              TARGET_DIR="$HOME/ioma"
+            else
+              TARGET_DIR="$(pwd)"
+            fi
+            
+            echo "📂 Deploying in directory: $TARGET_DIR"
+            cd "$TARGET_DIR" || exit 1
+            
+            echo "📥 Pulling latest commits from git..."
+            git fetch origin master
+            git reset --hard origin/master
+            
+            echo "🐳 Building Docker images for web and api..."
+            docker compose -f infrastructure/docker/compose.prod.yml build web api
+            
+            echo "🔄 Restarting updated production containers..."
+            docker compose -f infrastructure/docker/compose.prod.yml up -d web api
+            
+            echo "🌱 Ensuring official catalogue is up to date in MongoDB..."
+            docker exec ioma-prod-api pnpm seed:official || true
+            
+            echo "🧹 Pruning unused dangling build layers..."
+            docker image prune -f
+            
+            echo "✅ Deployment completed successfully!"
+            docker ps --filter "name=ioma-prod" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
