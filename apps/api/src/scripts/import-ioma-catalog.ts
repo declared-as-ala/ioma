@@ -669,13 +669,13 @@ async function main() {
   const args = process.argv.slice(2);
   const isApply = args.includes("--apply");
   const isDryRun = args.includes("--dry-run") || !isApply;
-  const isUpdateImages = args.includes("--update-images") || isApply;
+  const isUpdateImages = args.includes("--update-images") || args.includes("--download-images");
 
   console.log("=== IOMA PARIS UAE CATALOGUE IMPORTER ===");
   console.log(
     `Mode: ${isApply ? "APPLY (Production/Database Write)" : "DRY RUN (Simulate & Validate)"}`,
   );
-  console.log(`Update Images: ${isUpdateImages ? "YES" : "NO"}`);
+  console.log(`Download/Sync Images: ${isUpdateImages ? "YES" : "NO (using pre-bundled assets)"}`);
 
   // 1. Connect to Mongo
   const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/ioma";
@@ -845,7 +845,7 @@ async function main() {
         const localFilePath = path.join(publicImageDir, filename);
         const webUrl = `/images/products/${filename}`;
 
-        if (isUpdateImages || !fs.existsSync(localFilePath)) {
+        if (isUpdateImages) {
           try {
             console.log(`Downloading image for ${slug} (${remoteUrl})...`);
             const imgRes = await fetch(remoteUrl);
