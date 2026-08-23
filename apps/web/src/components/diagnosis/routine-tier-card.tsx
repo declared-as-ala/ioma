@@ -98,28 +98,63 @@ export function RoutineTierCard({
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {currentTierData.morningSteps.map((prod, idx) => (
-              <div key={prod.sku} className="flex gap-4 items-start">
-                <div className="size-7 rounded-full bg-accent border border-border flex items-center justify-center text-xs font-medium shrink-0">
-                  {idx + 1}
+              <div
+                key={prod.sku}
+                className="p-4 rounded-xl border border-border/80 bg-background/60 hover:bg-background/90 transition-all flex flex-col sm:flex-row gap-4 items-start shadow-sm"
+              >
+                {/* Product Packaging Image Container */}
+                <div className="relative size-20 sm:size-24 shrink-0 rounded-lg bg-white border border-border/60 p-2 flex items-center justify-center overflow-hidden shadow-sm">
+                  <img
+                    src={prod.image || "/images/products/creme-sublime-revitalisante-1.jpg"}
+                    alt={prod.name[locale]}
+                    className="size-full object-contain select-none"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "/images/products/creme-sublime-revitalisante-1.jpg";
+                    }}
+                  />
+                  <span className="absolute top-1 start-1 size-5 rounded-full bg-foreground text-background text-[0.6rem] font-bold flex items-center justify-center shadow">
+                    {idx + 1}
+                  </span>
                 </div>
-                <div className="flex-1">
+
+                {/* Product Details */}
+                <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="font-medium text-sm text-foreground">
+                    <h4 className="font-display text-sm sm:text-base font-medium text-foreground leading-snug">
                       {prod.name[locale]}
-                    </p>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {formatPrice(prod.priceMinor)} AED
+                    </h4>
+                    <span className="text-xs sm:text-sm font-semibold text-foreground shrink-0">
+                      {formatPrice(prod.priceMinor)}{" "}
+                      <span className="text-[0.65rem] font-normal text-muted-foreground">
+                        AED
+                      </span>
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+
+                  <div className="flex items-center gap-2 text-[0.7rem] text-muted-foreground">
+                    <span className="uppercase tracking-wider font-medium text-ioma-violet">
+                      {prod.range?.name?.[locale] || "IOMA"}
+                    </span>
+                    <span>•</span>
+                    <span>{prod.size}</span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {prod.shortBenefit[locale]}
                   </p>
-                  <p className="mt-2 text-[0.7rem] bg-accent/60 px-2.5 py-1 rounded text-muted-foreground w-fit">
-                    <span className="font-medium text-foreground">{t("whyLabel")}:</span>{" "}
-                    {prod.whyThisProduct[locale]}
-                  </p>
+
+                  <div className="pt-1">
+                    <p className="text-[0.7rem] bg-accent/70 px-2.5 py-1 rounded text-muted-foreground inline-block">
+                      <span className="font-semibold text-foreground">
+                        {t("whyLabel")}:
+                      </span>{" "}
+                      {prod.whyThisProduct[locale]}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -138,28 +173,63 @@ export function RoutineTierCard({
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {currentTierData.eveningSteps.map((prod, idx) => (
-              <div key={prod.sku} className="flex gap-4 items-start">
-                <div className="size-7 rounded-full bg-accent border border-border flex items-center justify-center text-xs font-medium shrink-0">
-                  {idx + 1}
+              <div
+                key={prod.sku}
+                className="p-4 rounded-xl border border-border/80 bg-background/60 hover:bg-background/90 transition-all flex flex-col sm:flex-row gap-4 items-start shadow-sm"
+              >
+                {/* Product Packaging Image Container */}
+                <div className="relative size-20 sm:size-24 shrink-0 rounded-lg bg-white border border-border/60 p-2 flex items-center justify-center overflow-hidden shadow-sm">
+                  <img
+                    src={prod.image || "/images/products/creme-sublime-revitalisante-1.jpg"}
+                    alt={prod.name[locale]}
+                    className="size-full object-contain select-none"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "/images/products/creme-sublime-revitalisante-1.jpg";
+                    }}
+                  />
+                  <span className="absolute top-1 start-1 size-5 rounded-full bg-foreground text-background text-[0.6rem] font-bold flex items-center justify-center shadow">
+                    {idx + 1}
+                  </span>
                 </div>
-                <div className="flex-1">
+
+                {/* Product Details */}
+                <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="font-medium text-sm text-foreground">
+                    <h4 className="font-display text-sm sm:text-base font-medium text-foreground leading-snug">
                       {prod.name[locale]}
-                    </p>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {formatPrice(prod.priceMinor)} AED
+                    </h4>
+                    <span className="text-xs sm:text-sm font-semibold text-foreground shrink-0">
+                      {formatPrice(prod.priceMinor)}{" "}
+                      <span className="text-[0.65rem] font-normal text-muted-foreground">
+                        AED
+                      </span>
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+
+                  <div className="flex items-center gap-2 text-[0.7rem] text-muted-foreground">
+                    <span className="uppercase tracking-wider font-medium text-ioma-violet">
+                      {prod.range?.name?.[locale] || "IOMA"}
+                    </span>
+                    <span>•</span>
+                    <span>{prod.size}</span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {prod.shortBenefit[locale]}
                   </p>
-                  <p className="mt-2 text-[0.7rem] bg-accent/60 px-2.5 py-1 rounded text-muted-foreground w-fit">
-                    <span className="font-medium text-foreground">{t("whyLabel")}:</span>{" "}
-                    {prod.whyThisProduct[locale]}
-                  </p>
+
+                  <div className="pt-1">
+                    <p className="text-[0.7rem] bg-accent/70 px-2.5 py-1 rounded text-muted-foreground inline-block">
+                      <span className="font-semibold text-foreground">
+                        {t("whyLabel")}:
+                      </span>{" "}
+                      {prod.whyThisProduct[locale]}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
