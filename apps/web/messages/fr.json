@@ -369,7 +369,8 @@
     "compareTitle": "Comparatif Produits",
     "compareSubtitle": "Comparez les ingrédients actifs, besoins de peau et étapes de routine.",
     "compareEmpty": "Aucun produit sélectionné pour comparaison.",
-    "compareEmptyBody": "Parcourez la boutique et sélectionnez jusqu'à 3 produits à comparer."
+    "compareEmptyBody": "Parcourez la boutique et sélectionnez jusqu'à 3 produits à comparer.",
+    "addToBag": "Ajouter au Panier"
   },
   "Product": {
     "routineStep": {

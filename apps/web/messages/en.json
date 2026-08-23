@@ -359,7 +359,8 @@
     "compareTitle": "Product Comparison",
     "compareSubtitle": "Compare active ingredients, skin concerns, and routine steps side-by-side.",
     "compareEmpty": "No products selected for comparison.",
-    "compareEmptyBody": "Browse the shop and select up to 3 products to compare."
+    "compareEmptyBody": "Browse the shop and select up to 3 products to compare.",
+    "addToBag": "Add to Bag"
   },
   "Product": {
     "routineStep": {
