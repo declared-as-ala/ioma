@@ -9,12 +9,14 @@ import {
   Ip,
   Param,
   Post,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiConsumes, ApiTags } from "@nestjs/swagger";
+import type { Response } from "express";
 import type { RoutineTier } from "@ioma/config";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -23,22 +25,24 @@ import { AiAnalysisService, MAX_IMAGE_SIZE_BYTES } from "./ai-analysis.service";
 
 @ApiTags("ai-analysis")
 @Controller("ai-analysis")
-@UseGuards(JwtAuthGuard)
 export class AiAnalysisController {
   constructor(private readonly aiAnalysisService: AiAnalysisService) {}
 
   @Post("consent")
+  @UseGuards(JwtAuthGuard)
   recordConsent(@CurrentUser() user: JwtPayload, @Ip() ip: string) {
     return this.aiAnalysisService.recordConsent(user.sub, ip);
   }
 
   @Delete("consent")
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   withdrawConsent(@CurrentUser() user: JwtPayload) {
     return this.aiAnalysisService.withdrawConsent(user.sub);
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiConsumes("multipart/form-data")
   @UseInterceptors(
     FileInterceptor("image", { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } }),
@@ -58,11 +62,13 @@ export class AiAnalysisController {
   }
 
   @Get("mine")
+  @UseGuards(JwtAuthGuard)
   listMine(@CurrentUser() user: JwtPayload) {
     return this.aiAnalysisService.listMine(user.sub);
   }
 
   @Get("compare/:prevId/:currId")
+  @UseGuards(JwtAuthGuard)
   compare(
     @CurrentUser() user: JwtPayload,
     @Param("prevId") prevId: string,
@@ -71,17 +77,28 @@ export class AiAnalysisController {
     return this.aiAnalysisService.compareAnalyses(prevId, currId, user.sub);
   }
 
+  @Get(":id/image")
+  async getImage(@Param("id") id: string, @Res() res: Response) {
+    const { buffer, mimeType } = await this.aiAnalysisService.getImageBytes(id);
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Cache-Control", "private, max-age=86400");
+    res.send(buffer);
+  }
+
   @Get(":id")
+  @UseGuards(JwtAuthGuard)
   getById(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
     return this.aiAnalysisService.getById(id, user.sub);
   }
 
   @Get(":id/adaptive-questions")
+  @UseGuards(JwtAuthGuard)
   getAdaptiveQuestions(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
     return this.aiAnalysisService.getAdaptiveQuestions(id, user.sub);
   }
 
   @Post(":id/adaptive-answers")
+  @UseGuards(JwtAuthGuard)
   submitAdaptiveAnswers(
     @CurrentUser() user: JwtPayload,
     @Param("id") id: string,
@@ -91,6 +108,7 @@ export class AiAnalysisController {
   }
 
   @Post(":id/select-tier")
+  @UseGuards(JwtAuthGuard)
   selectTier(
     @CurrentUser() user: JwtPayload,
     @Param("id") id: string,
@@ -103,6 +121,7 @@ export class AiAnalysisController {
   }
 
   @Post(":id/chat")
+  @UseGuards(JwtAuthGuard)
   askAdvisor(
     @CurrentUser() user: JwtPayload,
     @Param("id") id: string,
@@ -120,6 +139,7 @@ export class AiAnalysisController {
   }
 
   @Post(":id/follow-up")
+  @UseGuards(JwtAuthGuard)
   submitFollowUp(
     @CurrentUser() user: JwtPayload,
     @Param("id") id: string,
@@ -129,6 +149,7 @@ export class AiAnalysisController {
   }
 
   @Delete(":id")
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
     return this.aiAnalysisService.remove(id, user.sub);

@@ -166,14 +166,9 @@ export class AiAnalysisService {
       throw new ForbiddenException("This analysis belongs to another account.");
     }
 
-    let imageUrl: string | null = null;
-    if (doc.imageDocumentId) {
-      try {
-        imageUrl = await this.documentsService.getSignedUrl(doc.imageDocumentId);
-      } catch {
-        imageUrl = null;
-      }
-    }
+    const imageUrl = doc.imageDocumentId
+      ? `/api/ai-analysis/${doc._id.toString()}/image`
+      : null;
 
     const activeTier = (doc.activeTier as RoutineTier) || "complete";
     const routines = doc.routines;
@@ -223,6 +218,15 @@ export class AiAnalysisService {
       createdAt:
         (doc as unknown as { createdAt?: Date }).createdAt?.toISOString() ?? null,
     };
+  }
+
+  async getImageBytes(id: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    const doc = await this.analysisModel.findById(id);
+    if (!doc || !doc.imageDocumentId) {
+      throw new NotFoundException("Analysis image not found.");
+    }
+    const result = await this.documentsService.getBytes(doc.imageDocumentId);
+    return { buffer: result.data, mimeType: result.mimeType };
   }
 
   async getAdaptiveQuestions(id: string, userId: string): Promise<AdaptiveQuestion[]> {
