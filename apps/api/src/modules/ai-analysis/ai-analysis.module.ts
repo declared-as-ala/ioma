@@ -13,6 +13,11 @@ import { AI_PROVIDER } from "./providers/ai-provider.interface";
 import { MockAIProvider } from "./providers/mock-ai.provider";
 import { GeminiAIProvider } from "./providers/gemini-ai.provider";
 import { AI_ANALYSIS_QUEUE } from "./ai-analysis.constants";
+import { AdaptiveConsultationService } from "./services/adaptive-consultation.service";
+import { ProductKnowledgeService } from "./services/product-knowledge.service";
+import { RecommendationEngineService } from "./services/recommendation-engine.service";
+import { AiBeautyAdvisorService } from "./services/ai-beauty-advisor.service";
+import { FollowUpService } from "./services/follow-up.service";
 
 @Module({
   imports: [
@@ -28,6 +33,11 @@ import { AI_ANALYSIS_QUEUE } from "./ai-analysis.constants";
   providers: [
     AiAnalysisService,
     AiAnalysisProcessor,
+    AdaptiveConsultationService,
+    ProductKnowledgeService,
+    RecommendationEngineService,
+    AiBeautyAdvisorService,
+    FollowUpService,
     GeminiAIProvider,
     MockAIProvider,
     {
@@ -51,5 +61,6 @@ import { AI_ANALYSIS_QUEUE } from "./ai-analysis.constants";
     },
   ],
   controllers: [AiAnalysisController],
+  exports: [AiAnalysisService],
 })
 export class AiAnalysisModule {}

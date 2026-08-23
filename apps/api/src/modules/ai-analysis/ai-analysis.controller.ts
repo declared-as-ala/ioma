@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
@@ -14,6 +15,7 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiConsumes, ApiTags } from "@nestjs/swagger";
+import type { RoutineTier } from "@ioma/config";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { JwtPayload } from "../auth/strategies/jwt.strategy";
@@ -60,9 +62,70 @@ export class AiAnalysisController {
     return this.aiAnalysisService.listMine(user.sub);
   }
 
+  @Get("compare/:prevId/:currId")
+  compare(
+    @CurrentUser() user: JwtPayload,
+    @Param("prevId") prevId: string,
+    @Param("currId") currId: string,
+  ) {
+    return this.aiAnalysisService.compareAnalyses(prevId, currId, user.sub);
+  }
+
   @Get(":id")
   getById(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
     return this.aiAnalysisService.getById(id, user.sub);
+  }
+
+  @Get(":id/adaptive-questions")
+  getAdaptiveQuestions(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
+    return this.aiAnalysisService.getAdaptiveQuestions(id, user.sub);
+  }
+
+  @Post(":id/adaptive-answers")
+  submitAdaptiveAnswers(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body: any,
+  ) {
+    return this.aiAnalysisService.submitAdaptiveAnswers(id, user.sub, body);
+  }
+
+  @Post(":id/select-tier")
+  selectTier(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body: { tier: RoutineTier },
+  ) {
+    if (!body?.tier || !["essential", "complete", "premium"].includes(body.tier)) {
+      throw new BadRequestException("Invalid routine tier.");
+    }
+    return this.aiAnalysisService.selectTier(id, user.sub, body.tier);
+  }
+
+  @Post(":id/chat")
+  askAdvisor(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body: { message: string; locale?: "en" | "fr" | "ar" },
+  ) {
+    if (!body?.message || body.message.trim().length === 0) {
+      throw new BadRequestException("Message is required.");
+    }
+    return this.aiAnalysisService.askAdvisor(
+      id,
+      user.sub,
+      body.message,
+      body.locale || "en",
+    );
+  }
+
+  @Post(":id/follow-up")
+  submitFollowUp(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body: any,
+  ) {
+    return this.aiAnalysisService.submitFollowUp(id, user.sub, body);
   }
 
   @Delete(":id")

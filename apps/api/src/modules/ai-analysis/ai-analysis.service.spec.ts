@@ -11,8 +11,13 @@ import { AiAnalysisService } from "./ai-analysis.service";
 import { AiConsent } from "./schemas/ai-consent.schema";
 import { AiAnalysis } from "./schemas/ai-analysis.schema";
 import { Product } from "../catalog/schemas/product.schema";
+import { ProductRange } from "../catalog/schemas/product-range.schema";
 import { DocumentsService } from "../documents/documents.service";
 import { AI_ANALYSIS_QUEUE } from "./ai-analysis.constants";
+import { AdaptiveConsultationService } from "./services/adaptive-consultation.service";
+import { RecommendationEngineService } from "./services/recommendation-engine.service";
+import { AiBeautyAdvisorService } from "./services/ai-beauty-advisor.service";
+import { FollowUpService } from "./services/follow-up.service";
 
 const VALID_IMAGE = {
   buffer: Buffer.from("fake-image-bytes"),
@@ -57,8 +62,36 @@ describe("AiAnalysisService consent gating", () => {
             find: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
           },
         },
+        {
+          provide: getModelToken(ProductRange.name),
+          useValue: {
+            findOne: jest
+              .fn()
+              .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+            find: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
+          },
+        },
         { provide: DocumentsService, useValue: documentsService },
         { provide: getQueueToken(AI_ANALYSIS_QUEUE), useValue: queue },
+        {
+          provide: AdaptiveConsultationService,
+          useValue: { generateQuestions: jest.fn(), buildSkinProfile: jest.fn() },
+        },
+        {
+          provide: RecommendationEngineService,
+          useValue: { generateRoutines: jest.fn() },
+        },
+        {
+          provide: AiBeautyAdvisorService,
+          useValue: {
+            askAdvisor: jest.fn(),
+            defaultSuggestedQuestions: jest.fn().mockReturnValue([]),
+          },
+        },
+        {
+          provide: FollowUpService,
+          useValue: { createCheckin: jest.fn(), compareAnalyses: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -76,8 +109,6 @@ describe("AiAnalysisService consent gating", () => {
   });
 
   it("rejects submission when every consent record for the user has been withdrawn", async () => {
-    // The query itself filters withdrawnAt: null, so a withdrawn-only
-    // history correctly resolves to no active consent found.
     consentModel.findOne.mockReturnValue({ sort: jest.fn().mockResolvedValue(null) });
 
     await expect(service.submit(FAKE_USER_ID, VALID_IMAGE)).rejects.toThrow(
@@ -97,7 +128,7 @@ describe("AiAnalysisService consent gating", () => {
     const created = { _id: analysisId, save: jest.fn().mockResolvedValue(undefined) };
     analysisModel.create.mockResolvedValue(created);
     documentsService.create.mockResolvedValue({ _id: new Types.ObjectId() });
-    // getById re-fetches via a separate query chain not under test here.
+
     jest
       .spyOn(service, "getById")
       .mockResolvedValue({ id: analysisId.toString() } as never);
@@ -153,8 +184,21 @@ describe("AiAnalysisService ownership", () => {
             find: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
           },
         },
+        {
+          provide: getModelToken(ProductRange.name),
+          useValue: {
+            findOne: jest
+              .fn()
+              .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+            find: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
+          },
+        },
         { provide: DocumentsService, useValue: {} },
         { provide: getQueueToken(AI_ANALYSIS_QUEUE), useValue: { add: jest.fn() } },
+        { provide: AdaptiveConsultationService, useValue: {} },
+        { provide: RecommendationEngineService, useValue: {} },
+        { provide: AiBeautyAdvisorService, useValue: {} },
+        { provide: FollowUpService, useValue: {} },
       ],
     }).compile();
 

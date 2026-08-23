@@ -87,7 +87,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16" data-testid="pdp-layout">
         {/* Product Gallery */}
         <div className="flex flex-col gap-4">
-          <div className="relative aspect-square overflow-hidden rounded-md bg-ioma-grey-100">
+          <div className="relative aspect-square overflow-hidden rounded-md bg-white border border-border/60 p-6">
             {currentImage ? (
               <motion.div
                 key={currentImage}
@@ -101,7 +101,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   alt={product.name[locale]}
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
+                  className="object-contain p-4"
                   priority
                 />
               </motion.div>
@@ -115,13 +115,19 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   type="button"
                   onClick={() => setActiveImageIndex(idx)}
                   className={cn(
-                    "relative size-16 shrink-0 overflow-hidden rounded-sm border transition-all",
+                    "relative size-16 shrink-0 overflow-hidden rounded-sm border bg-white p-1 transition-all",
                     activeImageIndex === idx
-                      ? "border-ioma-black ring-1 ring-ioma-black"
+                      ? "border-ioma-violet ring-1 ring-ioma-violet"
                       : "border-border opacity-70 hover:opacity-100",
                   )}
                 >
-                  <Image src={img} alt="" fill className="object-cover" sizes="64px" />
+                  <Image
+                    src={img}
+                    alt=""
+                    fill
+                    className="object-contain p-1"
+                    sizes="64px"
+                  />
                 </button>
               ))}
             </div>
@@ -130,7 +136,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
         {/* Product Info */}
         <div>
-          <p className="text-xs uppercase tracking-heading text-muted-foreground">
+          <p className="text-xs uppercase tracking-heading text-muted-foreground font-semibold">
             {product.range.name[locale]}
           </p>
           <h1 className="mt-4 font-display text-3xl sm:text-4xl">
@@ -158,7 +164,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     className={cn(
                       "rounded-full border px-4 py-1.5 text-xs uppercase tracking-widest transition-all duration-150",
                       selectedVariant?.sku === variant.sku
-                        ? "border-foreground bg-foreground text-background shadow-xs scale-102"
+                        ? "border-foreground bg-foreground text-background shadow-xs scale-102 font-semibold"
                         : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
                     )}
                   >
@@ -170,7 +176,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           ) : null}
 
           {selectedVariant ? (
-            <p className="mt-6 text-lg font-medium">
+            <p className="mt-6 text-xl font-semibold text-foreground">
               {formatMinor(selectedVariant.priceMinor, locale)}
             </p>
           ) : null}
@@ -179,7 +185,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             <Button
               size="lg"
               data-testid="add-to-cart"
-              className="uppercase tracking-widest transition-transform active:scale-98"
+              className="uppercase tracking-widest font-semibold transition-transform active:scale-98 bg-ioma-violet hover:bg-ioma-violet/90 text-white"
               disabled={!selectedVariant?.inStock || addCartItem.isPending}
               onClick={handleAddToCart}
             >
@@ -234,6 +240,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       </div>
 
       <div className="mt-16 max-w-2xl border-t border-border pt-8">
+        <h3 className="text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2">
+          Description
+        </h3>
         <p className="text-sm leading-relaxed text-muted-foreground">
           {product.description[locale]}
         </p>

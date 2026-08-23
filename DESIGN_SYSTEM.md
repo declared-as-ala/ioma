@@ -119,6 +119,15 @@ Principles & Rules:
 - Overlays (drawers, dialogs) trap focus, restore focus on close, lock body scroll, and support Escape key.
 - Directional transforms follow locale (`ar` RTL direction awareness).
 
+### Cinematic Editorial Motion (Homepage Hero)
+
+- **Pinned Container**: Pinned via CSS sticky (`h-[200vh]` desktop, `h-[140vh]` mobile) to keep user in complete control of natural scroll physics. Zero scroll hijacking.
+- **Scroll-Driven Video Synchronization**: Video playback `currentTime` mapped linearly to spring-smoothed `scrollYProgress` with instant keyframe GOP (`-g 5`) for seamless scrubbing.
+- **Camera Movement**: Subtle scale expansion (`1.0 -> 1.08`), Y-drift (`0 -> -25px`), and desktop pointer micro-tilt (max ±4px / ±6px, spring damped 30/120).
+- **Multi-Phase Stagger**: 4 distinct narrative phases (Entrance → Scientific Precision → Transformation → Magazine Unfolding).
+- **Header Coordination**: Dynamic dark-to-light header crossfade based on scroll offset.
+- **Reduced Motion Fallback**: High-contrast static editorial layout with zero layout shifts.
+
 ## Breakpoints
 
 `sm 390px` · `md 768px` · `lg 1024px` · `xl 1280px` · `2xl 1440px` — matching the five required test resolutions exactly.

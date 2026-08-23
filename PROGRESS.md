@@ -1,6 +1,21 @@
 # PROGRESS.md — IOMA Paris Dubai
 
-**Last updated**: 2026-08-20
+**Last updated**: 2026-08-22
+
+## Sprint 13 — AI Skin Expert 2.0 (COMPLETE)
+
+- **Objective**: Completely upgrade the existing AI Skin Diagnosis into the "IOMA AI Skin Expert 2.0" digital consultation experience.
+- **Architectural Upgrades**:
+  1. Deprecated legacy standard 5-step questionnaire (`/diagnosis/standard`) to unify the entry point at `/diagnosis`.
+  2. Integrated structured Gemini Vision AI (`gemini-2.5-flash`) with observation schemas, image quality metrics, and cosmetic non-medical guardrails.
+  3. Added dynamic adaptive consultation (contextual 3–7 questions based on visual signals, current routine natural language ingestion, Dubai climate context).
+  4. Deterministic product candidate retrieval from real MongoDB database (`Product`, `ProductVariant`, `ProductRange`, `SkinConcern`, `Category`).
+  5. 3-tier routine building (**Essential**, **Complete**, **Premium**) calculated from database variant prices (`b2cPriceMinor`).
+  6. Post-results conversational AI beauty advisor with suggested question pills and dynamic routine adjustments.
+  7. Follow-up journey (Day 7 check-in, Day 28 reassessment, and Before/After cosmetic comparison tool).
+  8. Private MinIO storage with signed temporary URLs, consent records, and ownership authorization.
+  9. Trilingual UX (English, French, Arabic RTL) across all breakpoints (390px–1440px).
+  10. Verification: 18/18 Jest test suites passed (86/86 tests), 0 TypeScript errors across all 9 workspace projects, Next.js standalone build passed with 164 static pages.
 
 ## Functional Audit & Platform Hardening Summary
 
@@ -331,9 +346,23 @@ One local-environment note: host port 9000 was already bound by an unrelated `us
 - [x] **Automated i18n Key Parity Check Script**: Created validator script `packages/infra-scripts/src/check-i18n.ts` verifying 100% key parity across `en.json`, `fr.json`, and `ar.json` (717/717 matching keys).
 - [x] **Tests & Verification**: Created Playwright E2E spec `e2e/localization-seo.spec.ts` (4/4 passing). Full E2E suite (`b2b-flow`, `booking`, `training-protocols`, `admin`, `localization-seo`) **10/10 tests passing 100% cleanly**.
 
+## Completed Tasks — Homepage Cinematic Scroll Hero Upgrade — DONE
+
+- [x] **Audit & Architecture Decision**: Evaluated hero requirements against `CLAUDE.md`, `DESIGN_SYSTEM.md`, and `DECISIONS.md`. Selected `motion/react` with sticky CSS pinning (`useScroll`, `useTransform`, `useSpring`, `useReducedMotion`) to adhere to the single-animation-system convention, avoid layout thrashing, provide 60fps GPU acceleration, and ensure 100% Next.js SSR/HMR stability.
+- [x] **Scroll-Driven Video Playback & Asset Generation**: Generated 1080p 30fps luxury campaign video (`/videos/hero-cinematic.mp4` & `hero-cinematic.webm`) with low keyframe interval (`-g 5`) for immediate, hardware-accelerated scroll-scrubbing. Bound video `currentTime` to spring-smoothed `scrollYProgress` using `requestAnimationFrame` loop with instant poster fallback and manual play/pause override.
+- [x] **4-Phase Pinned Storytelling**:
+  - **Phase 1 (0→0.25)**: Full-bleed campaign portrait/video with camera push (`scale: 1.0 -> 1.08`), glowing eyebrow, editorial typography, and dual CTAs (`/diagnosis` & `/shop`).
+  - **Phase 2 (0.25→0.60)**: Scientific & Diagnostic layer with IOMA Sphere probe visual, animated status bar, and clinical precision metrics (Hydration 94%, Radiance Calibrated, Cellular Firmness 96%).
+  - **Phase 3 (0.50→0.75)**: Second editorial message transformation ("SUR-MESURE. PRÉCISION. IOMA." / "PERSONALIZED. PRECISE. IOMA." / "مخصصة. دقيقة. آيوما.") with verified claim badge and primary CTA.
+  - **Phase 4 (0.70→1.00)**: Magazine frame transition with border radius expansion (`0 -> 24px`), box shadow depth, and seamless unfolding panel into Section 2 with zero jump.
+- [x] **Header Dynamic Coordination**: Implemented dark translucent header with white IOMA logo and white navigation links when at scroll 0% on the homepage, transitioning seamlessly to solid white with black logo on scroll or subpages. Fixed layout spacer conditioned on `!isHomepage`.
+- [x] **Multi-Locale Parity (EN, FR, AR)**: Added all hero keys across `en.json`, `fr.json`, and `ar.json`. Checked with `pnpm check-i18n` (894/894 keys in 100% parity). Fully tested Arabic RTL typography, text alignment, and reversed arrow glyphs.
+- [x] **Accessibility & Reduced Motion**: Full static accessible fallback with zero layout shifts when `prefers-reduced-motion: reduce` is enabled.
+- [x] **Tests & Visual Verification**: Created Playwright E2E spec `e2e/cinematic-hero.spec.ts` (**11/11 tests passing 100% cleanly** across desktop, mobile 390px, Arabic RTL, reduced motion, and route transitions). Captured 26 high-resolution visual screenshots across 5 viewports (1440×900, 1280×800, 1024×768, 768×1024, 390×844) and 5 scroll percentages.
+
 ## Remaining Work
 
-Sprints 0–11 (including 4.5, 4.6, 4.7) are all complete and live-verified. Next: Sprint 12 (Testing & Deployment) — see `SPRINTS.md` for the complete breakdown and `TODO.md` for the live checklist.
+Sprints 0–11 (including 4.5, 4.6, 4.7, and Homepage Cinematic Hero) are all complete and live-verified. Next: Sprint 12 (Testing & Deployment) — see `SPRINTS.md` for the complete breakdown and `TODO.md` for the live checklist.
 
 ## Notes
 

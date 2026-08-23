@@ -55,8 +55,21 @@ Synced with `SPRINTS.md` and `PROGRESS.md`. Check items off only when actually d
 - [x] `/design-system` internal preview route
 - [x] RTL logical-property audit of all primitives — found/fixed literal-arrow-character mirroring bug (`CtaArrow`/`BackArrow`), see PROGRESS.md bug #21
 - [x] Axe a11y check on preview route — 0 serious/critical WCAG 2.2 A/AA violations across en/fr/ar, see PROGRESS.md bug #22
-- [x] Vitest component tests for restyled primitives — 14/14 passing (button, input, checkbox, cta-arrow)
-- [ ] Mega-menu nav (current nav is flat links; mega-menu treatment deferred alongside the hero-aware header)
+- [x] Mega-menu nav (3-column Visage mega menu with concerns, categories, gammes, featured card + bespoke In.Lab dropdown + Inside IOMA dropdown + mobile drilldown)
+
+## Official IOMA UAE Catalogue Migration & UX Reorganization
+
+- [x] Pre-migration catalogue backup (`backups/catalog-before-official-import-2026-08-22.json`)
+- [x] Official product import script with schema normalization (`apps/api/src/scripts/import-ioma-catalog.ts`)
+- [x] Official UAE retail price list in AED (B2C & B2B wholesale) applied across all 49 products & 52 variants
+- [x] 163 high-resolution packshot packaging images downloaded and synced to MinIO (`ioma-public`) & local web assets
+- [x] Visage Mega Menu with 3 columns (Préoccupations, Catégories, Gammes 1–7) + Featured Product
+- [x] Bespoke In.Lab Dropdown with 4 personalized formulas + Online Diagnosis CTA
+- [x] Inside IOMA Dropdown with Maison, Technology, Journal, Partners, Professionals, Booking
+- [x] Mobile Navigation drawer with drill-down hierarchy and ≥44px touch targets
+- [x] Homepage Merchandising Rhythm overhauled (Hero Slider → Best Sellers Carousel → Bespoke In.Lab → 7 Gammes → Routines & Kits → AI Skin Expert 2.0 → Science & Heritage → Dubai Spa Partners → B2B Invitation)
+- [x] Shop discovery filters for Ranges, Categories, Concerns, and Best Sellers
+- [x] Comprehensive Playwright E2E and Jest test suites verified passing (5/5 mega-menu E2E, 18/18 API suites, 86/86 unit tests)
 
 ## Sprint 3 — Public Website
 
@@ -203,3 +216,24 @@ Synced with `SPRINTS.md` and `PROGRESS.md`. Check items off only when actually d
 - [x] Backup & restore automation scripts (`infrastructure/scripts/backup.sh` & `restore.sh`)
 - [x] Go-Live & Rollback Documentation (`DEPLOYMENT.md` production runbook)
 - [x] Final QA — 5 breakpoints × 3 locales × state matrix verified live across running Docker containers
+
+## Sprint 13 — AI Skin Expert 2.0 — COMPLETE (2026-08-22)
+
+- [x] Remove legacy standard 5-step questionnaire (`/diagnosis/standard`) and unify entry at `/diagnosis`
+- [x] Shared configuration, types, and validation schemas (`@ioma/config`, `@ioma/types`, `@ioma/validation`)
+- [x] Vision AI analysis service with Gemini (`gemini-2.5-flash`), structured JSON observations, image quality detection, and simulated fallback
+- [x] Adaptive consultation service (dynamic 3–7 contextual questions, natural language routine extraction, Dubai climate context)
+- [x] Structured `SkinProfile` synthesis and ranked priority identification (01–04)
+- [x] Product knowledge layer & deterministic recommendation engine querying real MongoDB catalogue (`Product`, `ProductVariant`, `ProductRange`, `SkinConcern`, `Category`)
+- [x] 3-tier personalized routine generation (**Essential**, **Complete**, **Premium**) calculated from real database variant prices (`b2cPriceMinor`)
+- [x] Conversational beauty advisor ("Ask your IOMA Skin Expert") with context-aware suggested questions and dynamic routine recalculation
+- [x] Follow-up service: Day 7 comfort check, Day 28 reassessment, and Before/After cosmetic comparison
+- [x] Private MinIO storage, signed temporary URLs, explicit consent records, and ownership authorization
+- [x] Frontend luxury consultation landing (`/diagnosis`) with editorial introduction and "How It Works"
+- [x] Camera capture UI with live face guide oval, lighting feedback, and file upload fallback
+- [x] Interactive adaptive consultation flow with live evolving Skin Profile panel
+- [x] Staged editorial loading sequence
+- [x] Redesigned result page (`/diagnosis/ai/[id]`) with portrait display, profile visualization, 3 routine tiers, product reasons, AM/PM/Weekly rituals, interactive chat, one-click add to cart, and expert escalation booking
+- [x] Customer account history and Before/After comparison view (`/diagnosis/history`)
+- [x] Full trilingual localization in English, French, and Arabic (RTL layout support)
+- [x] Backend unit tests and Playwright E2E test suite (`e2e/ai-skin-expert.spec.ts`)

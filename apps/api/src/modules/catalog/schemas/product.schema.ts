@@ -55,8 +55,35 @@ export class Product {
 
   @Prop({ type: [String], default: [] })
   images!: string[];
+
+  @Prop({ type: { en: String, fr: String, ar: String }, default: null })
+  benefits?: { en: string; fr: string; ar: string } | null;
+
+  @Prop({ type: { en: String, fr: String, ar: String }, default: null })
+  activeIngredients?: { en: string; fr: string; ar: string } | null;
+
+  @Prop({ type: { en: String, fr: String, ar: String }, default: null })
+  texture?: { en: string; fr: string; ar: string } | null;
+
+  @Prop({ type: { en: String, fr: String, ar: String }, default: null })
+  officialClaims?: { en: string; fr: string; ar: string } | null;
+
+  @Prop({ type: String, default: null })
+  sourceUrl?: string | null;
+
+  @Prop({ type: String, default: "AVAILABLE", enum: ["AVAILABLE", "PENDING"] })
+  uaeAvailability!: "AVAILABLE" | "PENDING";
+
+  @Prop({ type: Boolean, default: false })
+  isBestSeller!: boolean;
+
+  @Prop({ type: Number, default: 5.0 })
+  rating!: number;
+
+  @Prop({ type: Number, default: 0 })
+  reviewCount!: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ status: 1, rangeId: 1 });
-ProductSchema.index({ "name.en": "text", "shortBenefit.en": "text" });
+ProductSchema.index({ "name.en": "text", "shortBenefit.en": "text", "name.fr": "text" });

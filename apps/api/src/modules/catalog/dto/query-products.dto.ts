@@ -4,10 +4,32 @@ import type { ProductRangeKey } from "@ioma/config";
 
 export class QueryProductsDto {
   @ApiPropertyOptional({
-    enum: ["hydra", "energize", "renew", "calm", "purete", "matte", "illumine"],
+    enum: [
+      "hydra",
+      "energize",
+      "renew",
+      "calm",
+      "purete",
+      "matte",
+      "illumine",
+      "inlab",
+      "coco",
+      "hair",
+    ],
   })
   @IsOptional()
-  @IsIn(["hydra", "energize", "renew", "calm", "purete", "matte", "illumine"])
+  @IsIn([
+    "hydra",
+    "energize",
+    "renew",
+    "calm",
+    "purete",
+    "matte",
+    "illumine",
+    "inlab",
+    "coco",
+    "hair",
+  ])
   range?: ProductRangeKey;
 
   @ApiPropertyOptional()
@@ -24,4 +46,9 @@ export class QueryProductsDto {
   @IsOptional()
   @IsString()
   q?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  bestSeller?: string;
 }

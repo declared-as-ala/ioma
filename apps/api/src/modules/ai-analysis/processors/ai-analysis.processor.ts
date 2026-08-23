@@ -4,20 +4,16 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import type { Job } from "bullmq";
 import { AiAnalysis, AiAnalysisDocument } from "../schemas/ai-analysis.schema";
-import { Product, ProductDocument } from "../../catalog/schemas/product.schema";
-import {
-  ProductVariant,
-  ProductVariantDocument,
-} from "../../catalog/schemas/product-variant.schema";
 import {
   ProductRange,
   ProductRangeDocument,
 } from "../../catalog/schemas/product-range.schema";
-import { buildRoutineForRange } from "../../catalog/routine-builder";
 import { DocumentsService } from "../../documents/documents.service";
 import { AI_PROVIDER, type AIProvider } from "../providers/ai-provider.interface";
-import { recommendRangeFromIndicators } from "../ai-analysis-rules";
 import { AI_ANALYSIS_JOB, AI_ANALYSIS_QUEUE } from "../ai-analysis.constants";
+import { AdaptiveConsultationService } from "../services/adaptive-consultation.service";
+import { RecommendationEngineService } from "../services/recommendation-engine.service";
+import { AiBeautyAdvisorService } from "../services/ai-beauty-advisor.service";
 
 interface AnalyzeJobData {
   analysisId: string;
@@ -30,13 +26,13 @@ export class AiAnalysisProcessor extends WorkerHost {
   constructor(
     @InjectModel(AiAnalysis.name)
     private readonly analysisModel: Model<AiAnalysisDocument>,
-    @InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
-    @InjectModel(ProductVariant.name)
-    private readonly variantModel: Model<ProductVariantDocument>,
     @InjectModel(ProductRange.name)
     private readonly rangeModel: Model<ProductRangeDocument>,
     private readonly documentsService: DocumentsService,
     @Inject(AI_PROVIDER) private readonly aiProvider: AIProvider,
+    private readonly adaptiveConsultation: AdaptiveConsultationService,
+    private readonly recommendationEngine: RecommendationEngineService,
+    private readonly beautyAdvisor: AiBeautyAdvisorService,
   ) {
     super();
   }
@@ -60,27 +56,37 @@ export class AiAnalysisProcessor extends WorkerHost {
         analysis.imageDocumentId,
       );
       const result = await this.aiProvider.analyze({ imageBuffer: data, mimeType });
-      const recommendation = recommendRangeFromIndicators(result.indicators);
-      const range = await this.rangeModel.findOne({ slug: recommendation.range });
-      if (!range) {
-        throw new Error(
-          `Recommended range slug "${recommendation.range}" has no matching ProductRange document.`,
-        );
-      }
-      const { morningRoutine, eveningRoutine } = await buildRoutineForRange(
-        this.productModel,
-        this.variantModel,
-        range._id,
+
+      // Build initial baseline skin profile
+      const initialProfile = this.adaptiveConsultation.buildSkinProfile(
+        result.observations,
+        result.detectedSkinType,
+        { answers: [], routineText: "" },
       );
 
+      // Deterministically generate 3 routine tiers (Essential, Complete, Premium)
+      const { primaryRange, essential, complete, premium } =
+        await this.recommendationEngine.generateRoutines(initialProfile);
+
+      const rangeDoc = await this.rangeModel.findOne({ slug: primaryRange.slug });
+
       analysis.indicators = result.indicators;
+      analysis.observations = result.observations;
+      analysis.imageQuality = result.imageQuality;
+      analysis.detectedSkinType = result.detectedSkinType;
+      analysis.primaryConcerns = result.primaryConcerns;
+      analysis.diagnosticNarrative = result.diagnosticNarrative;
+      analysis.skinProfile = initialProfile;
+      analysis.routines = { essential, complete, premium };
+      analysis.activeTier = "complete";
       analysis.isSimulated = result.isSimulated;
-      analysis.resultVersion = "v1";
-      analysis.recommendedRangeId = range._id;
-      analysis.morningRoutine = morningRoutine;
-      analysis.eveningRoutine = eveningRoutine;
+      analysis.resultVersion = "v2";
+      analysis.recommendedRangeId = rangeDoc?._id || null;
+      analysis.suggestedQuestions = this.beautyAdvisor.defaultSuggestedQuestions("en");
       analysis.status = "completed";
+
       await analysis.save();
+      this.logger.log(`Analysis ${analysis._id.toString()} completed successfully.`);
     } catch (err) {
       this.logger.error(
         `Analysis ${analysis._id.toString()} failed: ${(err as Error).message}`,

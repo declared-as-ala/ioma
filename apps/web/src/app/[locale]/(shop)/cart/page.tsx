@@ -42,16 +42,20 @@ export default function CartPage() {
                 key={item.sku}
                 className="grid grid-cols-[80px_minmax(0,1fr)] gap-4 py-6 md:grid-cols-[112px_minmax(0,1fr)_auto] md:gap-6"
               >
-                <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-ioma-grey-100 md:size-28">
-                  {item.product?.images[0] ? (
+                <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center md:size-28">
+                  {item.product?.images?.[0] ? (
                     <Image
                       src={item.product.images[0]}
-                      alt={item.product.name[locale]}
+                      alt={item.product.name?.[locale] ?? item.sku}
                       fill
                       sizes="112px"
-                      className="object-cover"
+                      className="object-contain p-2"
                     />
-                  ) : null}
+                  ) : (
+                    <div className="size-full flex items-center justify-center bg-muted/40 text-xs uppercase font-bold tracking-widest text-muted-foreground">
+                      IOMA
+                    </div>
+                  )}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
                   <div>

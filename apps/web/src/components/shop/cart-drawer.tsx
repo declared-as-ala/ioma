@@ -50,16 +50,20 @@ export function CartDrawer() {
             <ul className="flex flex-col gap-6 py-4">
               {cart.items.map((item) => (
                 <li key={item.sku} className="flex gap-4">
-                  <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-ioma-grey-100">
-                    {item.product?.images[0] ? (
+                  <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-white border border-border/40 flex items-center justify-center">
+                    {item.product?.images?.[0] ? (
                       <Image
                         src={item.product.images[0]}
-                        alt={item.product.name[locale]}
+                        alt={item.product.name?.[locale] ?? item.sku}
                         fill
                         sizes="80px"
-                        className="object-cover"
+                        className="object-contain p-1"
                       />
-                    ) : null}
+                    ) : (
+                      <div className="size-full flex items-center justify-center bg-muted/40 text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                        IOMA
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-1 flex-col">
                     <p className="text-sm font-medium">{item.product?.name[locale]}</p>

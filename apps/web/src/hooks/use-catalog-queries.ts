@@ -13,6 +13,7 @@ export interface ProductFilters {
   category?: string;
   concern?: string;
   q?: string;
+  bestSeller?: string;
 }
 
 function toQueryString(filters: ProductFilters): string {
@@ -21,6 +22,7 @@ function toQueryString(filters: ProductFilters): string {
   if (filters.category) params.set("category", filters.category);
   if (filters.concern) params.set("concern", filters.concern);
   if (filters.q) params.set("q", filters.q);
+  if (filters.bestSeller) params.set("bestSeller", filters.bestSeller);
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }

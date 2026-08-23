@@ -2,12 +2,18 @@
 
 import { use, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import type { Locale } from "@ioma/config";
+import type { Locale, RoutineTier } from "@ioma/config";
 import { AI_INDICATOR_KEYS } from "@ioma/config";
+import type { RecommendedProduct } from "@ioma/types";
 import { Link, useRouter } from "@/i18n/navigation";
-import { useAiAnalysisQuery, useDeleteAiAnalysis } from "@/hooks/use-ai-analysis";
+import {
+  useAiAnalysisQuery,
+  useAskAdvisor,
+  useDeleteAiAnalysis,
+  useSelectRoutineTier,
+  useSubmitFollowUp,
+} from "@/hooks/use-ai-analysis";
 import { useAddRoutineToCart } from "@/hooks/use-add-routine-to-cart";
-import { RoutineList, dedupeVariantsBySku } from "@/components/diagnosis/routine-list";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { RoutineTierCard } from "@/components/diagnosis/routine-tier-card";
+import { AiChatConsultant } from "@/components/diagnosis/ai-chat-consultant";
+import { Calendar, Trash2, Share2 } from "lucide-react";
 
 export default function AiDiagnosisResultPage({
   params,
@@ -25,187 +34,335 @@ export default function AiDiagnosisResultPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  // All translation namespaces are loaded unconditionally, up front — this
-  // component has several early-return branches (loading/processing/
-  // failed/completed), and calling useTranslations() conditionally inside
-  // those branches would violate the Rules of Hooks (a real bug: polling
-  // moves this component from the "processing" branch to "completed" on
-  // the same mounted instance, which would change the hook call count
-  // between renders).
-  const t = useTranslations("Diagnosis.ai.result");
-  const tProcessing = useTranslations("Diagnosis.ai.processing");
+  const t = useTranslations("Diagnosis.resultPage");
+  const tAi = useTranslations("Diagnosis.ai.result");
   const tIndicators = useTranslations("Diagnosis.ai.indicatorLabels");
-  const tRoutine = useTranslations("Diagnosis.result");
   const locale = useLocale() as Locale;
   const router = useRouter();
 
   const { data: result, isLoading } = useAiAnalysisQuery(id);
+  const selectTier = useSelectRoutineTier(id);
   const addRoutine = useAddRoutineToCart();
   const deleteAnalysis = useDeleteAiAnalysis();
+  const askAdvisor = useAskAdvisor(id);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   if (isLoading || !result) {
     return (
-      <main className="mx-auto max-w-3xl px-4 md:px-6 py-24" aria-busy="true">
+      <main className="mx-auto max-w-4xl px-4 md:px-6 py-24" aria-busy="true">
         <div className="h-8 w-56 animate-pulse bg-ioma-grey-100" />
-        <div className="mt-10 h-64 animate-pulse bg-ioma-grey-100" />
-      </main>
-    );
-  }
-
-  if (result.status === "queued" || result.status === "processing") {
-    return (
-      <main className="mx-auto max-w-2xl px-4 md:px-6 py-24" aria-busy="true">
-        <h1 className="font-display text-3xl">{tProcessing("title")}</h1>
-        <p
-          role="status"
-          className="mt-4 text-sm text-muted-foreground"
-          data-testid="ai-processing-status"
-        >
-          {tProcessing("body")}
-        </p>
-        <div className="mt-10 h-2 w-full overflow-hidden rounded-full bg-ioma-grey-100">
-          <div className="h-2 w-1/3 animate-pulse bg-foreground" />
-        </div>
+        <div className="mt-10 h-96 animate-pulse bg-ioma-grey-100" />
       </main>
     );
   }
 
   if (result.status === "failed") {
     return (
-      <main className="mx-auto max-w-2xl px-4 md:px-6 py-24">
-        <h1 className="font-display text-3xl text-destructive">{t("failedTitle")}</h1>
+      <main className="mx-auto max-w-2xl px-4 md:px-6 py-24 text-center">
+        <h1 className="font-display text-3xl text-destructive">{tAi("failedTitle")}</h1>
         <p role="alert" className="mt-4 text-sm text-muted-foreground">
-          {t("failedBody")}
+          {tAi("failedBody")}
         </p>
         <Button asChild size="lg" className="mt-8 uppercase tracking-widest">
-          <Link href="/diagnosis/ai">{t("tryAgain")}</Link>
+          <Link href="/diagnosis">{tAi("tryAgain")}</Link>
         </Button>
       </main>
     );
   }
 
-  const allVariants = dedupeVariantsBySku([
-    ...result.morningRoutine,
-    ...result.eveningRoutine,
-  ]);
+  const activeTier = result.activeTier || "complete";
+  const routines = result.routines;
+
+  const handleSelectTier = (tier: RoutineTier) => {
+    selectTier.mutate(tier);
+  };
+
+  const handleAddToCart = (products: RecommendedProduct[]) => {
+    const variants = products.map((p) => ({
+      sku: p.sku,
+      size: p.size,
+      priceMinor: p.priceMinor,
+      name: p.name,
+      image: p.image,
+    }));
+    addRoutine.mutate(variants);
+  };
+
+  const handleSendMessage = (message: string) => {
+    askAdvisor.mutate({ message, locale });
+  };
+
+  const handleShare = () => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
 
   return (
-    <main className="mx-auto max-w-3xl px-4 md:px-6 py-24">
-      <p className="text-xs uppercase tracking-widest text-muted-foreground">
-        {t("kicker")}
-      </p>
-      <h1 className="mt-3 font-display text-4xl">{t("title")}</h1>
-
-      {result.isSimulated ? (
-        <div
-          role="status"
-          className="mt-6 rounded-md border border-border bg-accent p-4 text-sm text-foreground/90"
-          data-testid="ai-simulated-badge"
-        >
-          <p className="font-medium uppercase tracking-widest text-xs">
-            {t("simulatedBadge")}
-          </p>
-          <p className="mt-2 text-muted-foreground">{t("disclaimer")}</p>
+    <main className="mx-auto max-w-5xl px-4 md:px-6 py-16 md:py-24 space-y-20">
+      {/* 01: YOUR SKIN TODAY */}
+      <section aria-labelledby="section-skin-today" className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/60 pb-6">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+              {t("section01Kicker")}
+            </p>
+            <h1
+              id="section-skin-today"
+              className="mt-2 font-display text-3xl md:text-5xl"
+            >
+              {t("section01Title")}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleShare} className="text-xs">
+              <Share2 className="me-2 size-3.5" />
+              {copiedLink ? t("copiedLink") : t("shareConsultation")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmOpen(true)}
+              className="text-xs text-destructive hover:text-destructive"
+              data-testid="delete-ai-analysis"
+            >
+              <Trash2 className="me-2 size-3.5" />
+              {tAi("delete")}
+            </Button>
+          </div>
         </div>
-      ) : null}
 
-      {result.indicators ? (
-        <div className="mt-10">
-          <h2 className="font-display text-xl">{t("indicators")}</h2>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            {AI_INDICATOR_KEYS.map((key) => (
-              <div key={key}>
-                <div className="flex items-center justify-between text-sm">
-                  <dt>{tIndicators(key)}</dt>
-                  <dd className="text-muted-foreground">
-                    {result.indicators![key]} / 100
-                  </dd>
-                </div>
-                <div className="mt-1 h-1.5 w-full bg-ioma-grey-100">
-                  <div
-                    className="h-1.5 bg-foreground"
-                    style={{ width: `${result.indicators![key]}%` }}
-                  />
-                </div>
+        {/* Disclaimer & Photo Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          {result.imageUrl && (
+            <div className="md:col-span-4">
+              <div className="relative aspect-3/4 rounded-md overflow-hidden border border-border shadow-sm">
+                <img
+                  src={result.imageUrl}
+                  alt="Skin diagnosis portrait"
+                  className="w-full h-full object-cover"
+                />
               </div>
-            ))}
-          </dl>
+              <p className="mt-2 text-[0.65rem] text-center text-muted-foreground uppercase tracking-widest">
+                {t("privateImageNotice")}
+              </p>
+            </div>
+          )}
+
+          <div
+            className={`${result.imageUrl ? "md:col-span-8" : "md:col-span-12"} space-y-6`}
+          >
+            <div className="p-4 rounded border border-border/80 bg-accent/40 text-xs text-muted-foreground leading-relaxed">
+              <p className="font-medium text-foreground uppercase tracking-widest text-[0.65rem] mb-1">
+                {t("cosmeticDisclaimerTitle")}
+              </p>
+              {t("cosmeticDisclaimerBody")}
+            </div>
+
+            {/* Visual Indicators Bars */}
+            {result.indicators && (
+              <div className="space-y-4">
+                <h3 className="font-display text-sm uppercase tracking-widest">
+                  {t("indicatorsTitle")}
+                </h3>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {AI_INDICATOR_KEYS.map((key) => (
+                    <div key={key} className="text-xs">
+                      <div className="flex justify-between py-1">
+                        <dt className="text-muted-foreground">{tIndicators(key)}</dt>
+                        <dd className="font-medium">{result.indicators![key]} / 100</dd>
+                      </div>
+                      <div className="h-1 w-full bg-border rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-foreground"
+                          style={{ width: `${result.indicators![key]}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+          </div>
         </div>
-      ) : null}
+      </section>
 
-      {result.range ? (
-        <p className="mt-10 text-sm">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">
-            {t("recommendedRange")}:{" "}
-          </span>
-          {result.range.name[locale]}
-        </p>
-      ) : null}
-
-      <div className="mt-10 grid gap-10 sm:grid-cols-2">
-        <RoutineList
-          title={tRoutine("morningRoutine")}
-          variants={result.morningRoutine}
-          emptyMessage={tRoutine("noMorningProducts")}
-          locale={locale}
-        />
-        <RoutineList
-          title={tRoutine("eveningRoutine")}
-          variants={result.eveningRoutine}
-          emptyMessage={tRoutine("noEveningProducts")}
-          locale={locale}
-        />
-      </div>
-
-      <div className="mt-12 flex flex-wrap items-center gap-4">
-        <Button
-          size="lg"
-          className="uppercase tracking-widest"
-          disabled={addRoutine.isPending || allVariants.length === 0}
-          onClick={() => addRoutine.mutate(allVariants)}
-          data-testid="add-routine-to-cart"
+      {/* 02 & 03: YOUR SKIN PROFILE & PRIORITIES */}
+      {result.skinProfile && (
+        <section
+          aria-labelledby="section-skin-profile"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8"
         >
-          {addRoutine.isPending ? tRoutine("addingToCart") : tRoutine("addToCart")}
-        </Button>
-        {addRoutine.isSuccess ? (
-          <span role="status" className="text-sm text-muted-foreground">
-            {tRoutine("addedToCart")}{" "}
-            <Link href="/cart" className="underline">
-              {tRoutine("viewCart")}
+          <div className="lg:col-span-5 border border-border p-6 md:p-8 bg-card rounded-md space-y-4">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+              {t("section02Kicker")}
+            </p>
+            <h2 id="section-skin-profile" className="font-display text-2xl">
+              {t("section02Title")}
+            </h2>
+
+            <div className="space-y-3 pt-2 text-xs">
+              <div className="flex justify-between py-2 border-b border-border/60">
+                <span className="text-muted-foreground">{t("profileSkinType")}:</span>
+                <span className="font-medium capitalize">
+                  {result.skinProfile.skinType}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-border/60">
+                <span className="text-muted-foreground">{t("profileHydration")}:</span>
+                <span className="font-medium">
+                  {result.skinProfile.hydrationTendency}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-border/60">
+                <span className="text-muted-foreground">{t("profileSensitivity")}:</span>
+                <span className="font-medium capitalize">
+                  {result.skinProfile.sensitivityLevel}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-border/60">
+                <span className="text-muted-foreground">{t("profileAcExposure")}:</span>
+                <span className="font-medium capitalize">
+                  {result.skinProfile.climateContext.acExposure}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 border border-border p-6 md:p-8 bg-card rounded-md space-y-4">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+              {t("section03Kicker")}
+            </p>
+            <h2 className="font-display text-2xl">{t("section03Title")}</h2>
+
+            <div className="space-y-3 pt-2">
+              {result.skinProfile.priorities.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-3.5 border border-border/80 bg-accent/20 rounded-md text-xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-display text-sm font-medium text-foreground">
+                      0{p.rank} —
+                    </span>
+                    <span className="font-medium text-foreground">{p.title[locale]}</span>
+                  </div>
+                  <p className="mt-1 text-muted-foreground leading-relaxed ps-7">
+                    {p.rationale[locale]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 04: WHAT YOUR SKIN IS TELLING US */}
+      {result.diagnosticNarrative && (
+        <section
+          aria-labelledby="section-skin-narrative"
+          className="border border-border p-6 md:p-10 bg-accent/30 rounded-md"
+        >
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+            {t("section04Kicker")}
+          </p>
+          <h2
+            id="section-skin-narrative"
+            className="mt-2 font-display text-2xl md:text-3xl"
+          >
+            {t("section04Title")}
+          </h2>
+          <p className="mt-4 text-sm md:text-base text-foreground/90 leading-relaxed max-w-3xl">
+            {result.diagnosticNarrative[locale]}
+          </p>
+        </section>
+      )}
+
+      {/* 05, 06, 07: YOUR IOMA RITUAL (3 TIERS) */}
+      {routines && (
+        <section aria-labelledby="section-ioma-ritual" className="space-y-8">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+              {t("section05Kicker")}
+            </p>
+            <h2
+              id="section-ioma-ritual"
+              className="mt-2 font-display text-3xl md:text-4xl"
+            >
+              {t("section05Title")}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("section05Subtitle")}</p>
+          </div>
+
+          <RoutineTierCard
+            tiers={routines}
+            activeTier={activeTier}
+            onSelectTier={handleSelectTier}
+            onAddToCart={handleAddToCart}
+            isAddingToCart={addRoutine.isPending}
+          />
+        </section>
+      )}
+
+      {/* 08: ASK YOUR IOMA SKIN EXPERT */}
+      <section aria-labelledby="section-ai-chat" className="space-y-6">
+        <AiChatConsultant
+          chatHistory={result.chatHistory || []}
+          suggestedQuestions={result.suggestedQuestions || []}
+          onSendMessage={handleSendMessage}
+          isSending={askAdvisor.isPending}
+        />
+      </section>
+
+      {/* 09 & 10: SKIN JOURNEY & FOLLOW-UP */}
+      <section className="border border-border p-6 md:p-10 bg-card rounded-md flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="space-y-2 text-center md:text-left">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+            {t("journeyKicker")}
+          </p>
+          <h3 className="font-display text-2xl">{t("journeyTitle")}</h3>
+          <p className="text-xs text-muted-foreground max-w-lg leading-relaxed">
+            {t("journeySubtitle")}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="uppercase tracking-widest text-xs"
+          >
+            <Link href="/diagnosis/history">{t("viewHistory")}</Link>
+          </Button>
+          <Button asChild size="sm" className="uppercase tracking-widest text-xs">
+            <Link href="/booking">
+              <Calendar className="me-2 size-3.5" />
+              {t("bookInstituteAnalysis")}
             </Link>
-          </span>
-        ) : null}
-        {addRoutine.isError ? (
-          <span role="alert" className="text-sm text-destructive">
-            {tRoutine("addToCartError")}
-          </span>
-        ) : null}
-      </div>
+          </Button>
+        </div>
+      </section>
 
-      <Button
-        variant="outline"
-        className="mt-10 text-destructive hover:text-destructive"
-        onClick={() => setConfirmOpen(true)}
-        data-testid="delete-ai-analysis"
-      >
-        {t("delete")}
-      </Button>
-
+      {/* Delete confirmation dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("deleteConfirmTitle")}</DialogTitle>
-            <DialogDescription>{t("deleteConfirmBody")}</DialogDescription>
+            <DialogTitle>{tAi("deleteConfirmTitle")}</DialogTitle>
+            <DialogDescription>{tAi("deleteConfirmBody")}</DialogDescription>
           </DialogHeader>
-          {deleteAnalysis.isError ? (
+          {deleteAnalysis.isError && (
             <p role="alert" className="text-sm text-destructive">
-              {t("deleteError")}
+              {tAi("deleteError")}
             </p>
-          ) : null}
+          )}
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">{t("cancel")}</Button>
+              <Button variant="outline">{tAi("cancel")}</Button>
             </DialogClose>
             <Button
               variant="destructive"
@@ -216,7 +373,7 @@ export default function AiDiagnosisResultPage({
                 })
               }
             >
-              {t("deleteConfirmCta")}
+              {tAi("deleteConfirmCta")}
             </Button>
           </DialogFooter>
         </DialogContent>

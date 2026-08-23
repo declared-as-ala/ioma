@@ -6,21 +6,27 @@ export interface RangeSummary {
   name: LocalizedText;
 }
 
-export interface ProductListItem {
-  slug: string;
-  name: LocalizedText;
-  shortBenefit: LocalizedText;
-  routineStep: "morning" | "evening" | "both";
-  images: string[];
-  range: RangeSummary;
-  priceFromMinor: number | null;
-}
-
 export interface ProductVariantSummary {
   sku: string;
   size: string;
   priceMinor: number;
   inStock: boolean;
+}
+
+export interface ProductListItem {
+  slug: string;
+  name: LocalizedText;
+  shortBenefit: LocalizedText;
+  description?: LocalizedText;
+  routineStep: "morning" | "evening" | "both";
+  images: string[];
+  range: RangeSummary;
+  priceFromMinor: number | null;
+  isBestSeller?: boolean;
+  rating?: number;
+  reviewCount?: number;
+  uaeAvailability?: "AVAILABLE" | "PENDING";
+  variants?: ProductVariantSummary[];
 }
 
 export interface CategorySummary {

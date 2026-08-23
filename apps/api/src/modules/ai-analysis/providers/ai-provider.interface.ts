@@ -1,9 +1,6 @@
-import type { AiIndicatorKey } from "@ioma/config";
+import type { AiIndicatorKey, SkinType } from "@ioma/config";
+import type { ImageQualityAssessment, VisionObservations } from "@ioma/types";
 
-// Provider-abstraction pattern (see ARCHITECTURE.md / DECISIONS.md — same
-// shape used for Payment/maps/email/SMS/search): call sites depend only on
-// this interface, so wiring in a real vision provider later touches only
-// this file's DI binding, never the ai-analysis processor/controller.
 export interface AnalyzeImageParams {
   imageBuffer: Buffer;
   mimeType: string;
@@ -11,6 +8,12 @@ export interface AnalyzeImageParams {
 
 export interface AnalyzeImageResult {
   indicators: Record<AiIndicatorKey, number>;
+  observations: VisionObservations;
+  imageQuality: ImageQualityAssessment;
+  confidence: number;
+  detectedSkinType: SkinType;
+  primaryConcerns: string[];
+  diagnosticNarrative: { en: string; fr: string; ar: string };
   isSimulated: boolean;
 }
 

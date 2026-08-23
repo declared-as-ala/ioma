@@ -71,6 +71,10 @@ export class CatalogService {
       filter.concernIds = concern._id;
     }
 
+    if (query.bestSeller === "true" || query.bestSeller === "1") {
+      filter.isBestSeller = true;
+    }
+
     if (query.q) {
       filter.$text = { $search: query.q };
     }
@@ -92,13 +96,25 @@ export class CatalogService {
         : null;
 
       return {
+        id: product._id,
         slug: product.slug,
         name: product.name,
         shortBenefit: product.shortBenefit,
+        description: product.description,
         routineStep: product.routineStep,
         images: product.images,
         range: { slug: product.rangeId.slug, name: product.rangeId.name },
         priceFromMinor,
+        isBestSeller: product.isBestSeller ?? false,
+        rating: product.rating ?? 5.0,
+        reviewCount: product.reviewCount ?? 0,
+        uaeAvailability: product.uaeAvailability ?? "AVAILABLE",
+        variants: productVariants.map((v) => ({
+          sku: v.sku,
+          size: v.size,
+          priceMinor: v.b2cPriceMinor,
+          inStock: v.quantityOnHand - v.quantityReserved > 0 || v.backorderAllowed,
+        })),
       };
     });
   }
@@ -128,6 +144,15 @@ export class CatalogService {
       routineStep: product.routineStep,
       fullIngredientsText: product.fullIngredientsText,
       images: product.images,
+      benefits: product.benefits ?? null,
+      activeIngredients: product.activeIngredients ?? null,
+      texture: product.texture ?? null,
+      officialClaims: product.officialClaims ?? null,
+      isBestSeller: product.isBestSeller ?? false,
+      rating: product.rating ?? 5.0,
+      reviewCount: product.reviewCount ?? 0,
+      uaeAvailability: product.uaeAvailability ?? "AVAILABLE",
+      sourceUrl: product.sourceUrl ?? null,
       categories: product.categoryIds.map((c) => ({ slug: c.slug, name: c.name })),
       concerns: product.concernIds.map((c) => ({
         slug: c.slug,

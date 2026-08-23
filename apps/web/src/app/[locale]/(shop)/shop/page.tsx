@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import {
   useProductsQuery,
   useRangesQuery,
+  useCategoriesQuery,
   useConcernsQuery,
 } from "@/hooks/use-catalog-queries";
 import { ProductCard } from "@/components/shop/product-card";
@@ -20,14 +21,30 @@ export default function ShopPage() {
   const searchParams = useSearchParams();
 
   const range = searchParams.get("range") ?? undefined;
+  const category = searchParams.get("category") ?? undefined;
   const concern = searchParams.get("concern") ?? undefined;
   const q = searchParams.get("q") ?? undefined;
+  const bestSeller = searchParams.get("bestSeller") ?? undefined;
 
   const { data: ranges } = useRangesQuery();
+  const { data: categories } = useCategoriesQuery();
   const { data: concerns } = useConcernsQuery();
-  const { data: products, isLoading, isError } = useProductsQuery({ range, concern, q });
+  const {
+    data: products,
+    isLoading,
+    isError,
+  } = useProductsQuery({
+    range,
+    category,
+    concern,
+    q,
+    bestSeller,
+  });
 
-  function setFilter(key: "range" | "concern", value: string | undefined) {
+  function setFilter(
+    key: "range" | "category" | "concern" | "bestSeller",
+    value: string | undefined,
+  ) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
@@ -35,13 +52,45 @@ export default function ShopPage() {
   }
 
   return (
-    <main className="mx-auto max-w-[1440px] px-4 md:px-6 py-24">
+    <main className="mx-auto max-w-[1440px] px-4 md:px-6 py-16">
       <p className="text-xs uppercase tracking-heading text-muted-foreground">
         {t("kicker")}
       </p>
       <h1 className="mt-4 max-w-2xl font-display text-4xl">{t("title")}</h1>
 
-      <div className="mt-10 flex flex-wrap items-center gap-2 border-b border-border pb-8">
+      {/* Categories Bar */}
+      <div className="mt-8 flex flex-wrap items-center gap-2 border-b border-border pb-6">
+        <FilterPill
+          active={!category && !bestSeller}
+          label="Toutes les catégories"
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete("category");
+            params.delete("bestSeller");
+            router.push(`${pathname}?${params.toString()}`);
+          }}
+        />
+        <FilterPill
+          active={bestSeller === "true"}
+          label="★ Meilleures Ventes"
+          onClick={() =>
+            setFilter("bestSeller", bestSeller === "true" ? undefined : "true")
+          }
+        />
+        {categories?.map((cat) => (
+          <FilterPill
+            key={cat.slug}
+            active={category === cat.slug}
+            label={cat.name[locale]}
+            onClick={() =>
+              setFilter("category", category === cat.slug ? undefined : cat.slug)
+            }
+          />
+        ))}
+      </div>
+
+      {/* Gammes Bar */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-border/50 pb-6">
         <FilterPill
           active={!range}
           label={t("allRanges")}
@@ -52,12 +101,13 @@ export default function ShopPage() {
             key={r.slug}
             active={range === r.slug}
             label={r.name[locale]}
-            onClick={() => setFilter("range", r.slug)}
+            onClick={() => setFilter("range", range === r.slug ? undefined : r.slug)}
           />
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 pb-8">
+      {/* Concerns Bar */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 pb-6">
         <FilterPill
           active={!concern}
           label={t("allConcerns")}
@@ -68,7 +118,7 @@ export default function ShopPage() {
             key={c.slug}
             active={concern === c.slug}
             label={c.name[locale]}
-            onClick={() => setFilter("concern", c.slug)}
+            onClick={() => setFilter("concern", concern === c.slug ? undefined : c.slug)}
           />
         ))}
       </div>

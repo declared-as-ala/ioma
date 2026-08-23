@@ -1,40 +1,43 @@
 import { z } from "zod";
-import { DIAGNOSIS_QUESTION_KEYS, DIAGNOSIS_QUESTION_VALUES } from "@ioma/config";
+import {
+  BUDGET_PREFERENCES,
+  ROUTINE_COMPLEXITY_PREFERENCES,
+  ROUTINE_TIERS,
+} from "@ioma/config";
 
-// Mirrors apps/api/src/modules/diagnosis/dto/submit-standard-diagnosis.dto.ts.
-const diagnosisAnswerSchema = z
-  .object({
-    questionKey: z.enum(DIAGNOSIS_QUESTION_KEYS),
-    value: z.string().min(1),
-  })
-  .superRefine((answer, ctx) => {
-    const allowed = DIAGNOSIS_QUESTION_VALUES[answer.questionKey];
-    if (!allowed.includes(answer.value)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `"${answer.value}" is not a valid value for "${answer.questionKey}".`,
-        path: ["value"],
-      });
-    }
-  });
-
-export const submitStandardDiagnosisSchema = z.object({
-  answers: z.array(diagnosisAnswerSchema).length(DIAGNOSIS_QUESTION_KEYS.length),
+export const adaptiveQuestionAnswerSchema = z.object({
+  questionKey: z.string().min(1),
+  value: z.union([z.string(), z.array(z.string())]),
 });
 
-export type SubmitStandardDiagnosisInput = z.infer<typeof submitStandardDiagnosisSchema>;
+export const submitAdaptiveAnswersSchema = z.object({
+  answers: z.array(adaptiveQuestionAnswerSchema),
+  routineText: z.string().optional(),
+  budgetPreference: z.enum(BUDGET_PREFERENCES).optional(),
+  routinePreference: z.enum(ROUTINE_COMPLEXITY_PREFERENCES).optional(),
+});
 
-// The questionnaire wizard's per-step form state — one answer at a time,
-// keyed by question, before assembling the final `answers` array on submit.
-export const standardDiagnosisAnswersSchema = z.object(
-  Object.fromEntries(
-    DIAGNOSIS_QUESTION_KEYS.map((key) => [
-      key,
-      z.string().min(1, "Please make a selection."),
-    ]),
-  ) as Record<(typeof DIAGNOSIS_QUESTION_KEYS)[number], z.ZodString>,
-);
+export type SubmitAdaptiveAnswersInput = z.infer<typeof submitAdaptiveAnswersSchema>;
 
-export type StandardDiagnosisAnswersInput = z.infer<
-  typeof standardDiagnosisAnswersSchema
->;
+export const askAiConsultantSchema = z.object({
+  message: z.string().min(1).max(1000),
+  locale: z.enum(["en", "fr", "ar"]).default("en"),
+});
+
+export type AskAiConsultantInput = z.infer<typeof askAiConsultantSchema>;
+
+export const selectRoutineTierSchema = z.object({
+  tier: z.enum(ROUTINE_TIERS),
+});
+
+export type SelectRoutineTierInput = z.infer<typeof selectRoutineTierSchema>;
+
+export const submitFollowUpCheckinSchema = z.object({
+  day: z.number().int().min(1),
+  comfortRating: z.number().int().min(1).max(5),
+  tightnessAfterCleansing: z.boolean(),
+  irritationNoticed: z.boolean(),
+  notes: z.string().max(500).optional(),
+});
+
+export type SubmitFollowUpCheckinInput = z.infer<typeof submitFollowUpCheckinSchema>;

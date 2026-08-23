@@ -159,3 +159,27 @@ Product variants carry `b2bPriceMinor` and `moq` fields (added in Sprint 4's sch
 ### 2026-08-08 — Professional portal uses (pro) route group with client-side role guard
 
 The professional portal lives under `(pro)/portal/` with a layout that checks the auth store's `user.roles` array client-side. Three states: approved → renders sidebar + portal content; pending → shows "application under review" message; neither → shows "access required" with link to `/professionals`. This mirrors the `(account)` layout pattern. Server-side enforcement happens at the API level via `ProfessionalApprovedGuard` — the client-side check is UX, not security.
+
+---
+
+### 2026-08-22 — IOMA AI Skin Expert 2.0: Unified Consultation & Deprecation of Standalone Questionnaire
+
+The client requirement requests transforming the AI skin analysis into an end-to-end digital beauty consultation ("IOMA AI Skin Expert") and removing the legacy 5-step standard questionnaire. **Decision**: Deprecate `/diagnosis/standard` and unify the consultation entry point at `/diagnosis`. The new flow orchestrates: (1) Camera capture with live face-guide & quality checks, (2) Real Gemini Vision AI analysis (`gemini-2.5-flash` / `gemini-3.7-flash`), (3) Adaptive multi-turn consultation tailored to visual cues, current routine, and Dubai climate exposure, (4) Synthesized `SkinProfile`, (5) Deterministic 3-tier routine building (Essential, Complete, Premium) from real MongoDB products, and (6) Post-results conversational AI beauty advisor.
+
+---
+
+### 2026-08-22 — Deterministic Catalogue Grounding: LLM Never Hallucinates Products or Prices
+
+To protect brand credibility and guarantee pricing accuracy, the AI is strictly decoupled from product inventory authority. **Decision**: The backend queries MongoDB (`Product`, `ProductVariant`, `ProductRange`, `SkinConcern`, `Category`) for eligible in-stock items based on deterministic skin concern, skin type, AM/PM routine position, and compatibility rules. The recommendation engine computes exact AED prices from database variants (`b2cPriceMinor`), while the LLM generates editorial explanations ("Why this product?", "What your skin is telling us") and powers conversational Q&A without ever inventing products or prices.
+
+---
+
+### 2026-08-23 — Homepage Cinematic Scroll Hero: Native Motion/React Pinning & Scroll-Driven Video Scrubbing
+
+To deliver an art-directed luxury editorial Hero (Luxury Beauty Campaign × French Maison × Scientific Skincare) without compromising performance or introducing layout thrashing, we evaluated animation technologies and video architectures:
+
+1. **Motion Architecture**: Selected `motion/react` with sticky CSS pinning (`position: sticky`, `top: 0`, container height `200vh` desktop / `140vh` mobile). Avoided third-party smooth scrolling hijacking (Lenis/Locomotive) to keep the user in 100% natural control of scroll physics. Single-library consistency with existing codebase (`CLAUDE.md`).
+2. **Scroll-Driven Video Scrubbing**: Generated an optimized 1080p campaign video (`/videos/hero-cinematic.mp4` & `.webm`) with short keyframe GOP (`-g 5`) enabling instantaneous, frame-accurate seeking. An RAF loop synchronizes `video.currentTime` with the spring-smoothed scroll progress (`smoothProgress.get() * video.duration`), making the video come alive when the user scrolls ("when scroll the video will on").
+3. **Multi-Phase Storytelling**: Orchestrated 4 scrubbed phases (Phase 1: Brand Entrance, Phase 2: Scientific Precision & Sphere Diagnostic Probe, Phase 3: "SUR-MESURE. PRÉCISION. IOMA." Transformation, Phase 4: Seamless Magazine Unfolding into Section 2).
+4. **Header Dynamic Coordination**: When at the top of the homepage, the header is dark translucent with a white IOMA logo and white navigation links; upon scrolling, it transitions smoothly to solid white with black logo and dark links.
+5. **Accessibility & Reduced Motion**: Automatically renders a static accessible fallback when `prefers-reduced-motion: reduce` is detected.

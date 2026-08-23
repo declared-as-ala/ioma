@@ -266,3 +266,31 @@ Numbered 4.7 for the same reason as 4.5/4.6 — inserted without renumbering Spr
 **Acceptance criteria**: `docker compose -f infrastructure/docker/compose.prod.yml up` builds and serves the full app; CI green on a clean clone; every item in `DEPLOYMENT.md`'s go-live checklist ticked or explicitly logged as a pending client-provided credential.
 
 **Tests**: full Playwright suite green; production Docker build succeeds with zero TypeScript errors.
+
+---
+
+## Sprint 13 — AI Skin Expert 2.0 — **IN PROGRESS** (2026-08-22)
+
+**Objective**: Completely upgrade the existing AI Skin Diagnosis into a luxury digital beauty consultation ("IOMA AI Skin Expert") backed by real vision AI, adaptive consultation, Dubai climate awareness, real MongoDB product grounding, deterministic 3-tier routine building (Essential, Complete, Premium), conversational AI advisory, follow-up/rescan comparisons, and human expert escalation.
+
+**Tasks**:
+
+- Remove the legacy 5-step standard questionnaire (`/diagnosis/standard`) in favor of the unified AI Skin Expert flagship flow at `/diagnosis`.
+- Vision AI with Gemini (`gemini-2.5-flash` / `gemini-3.7-flash`), structured JSON schema observations, image quality detection, and cosmetic advisory boundaries.
+- Photography guidance and camera capture UI with live face guide and file upload fallback.
+- Adaptive multi-turn consultation (3–7 contextual questions based on visual signals, current skincare routine ingestion, Dubai climate context, lifestyle goals, routine complexity, budget preference).
+- Complete synthesized `SkinProfile` and ranked priorities (01–04).
+- Real MongoDB catalogue retrieval & deterministic recommendation engine generating Essential (3 products), Complete (4-5 products), and Premium (5-7 products) routines calculated from real database variant prices (`b2cPriceMinor`).
+- "Why This Product?", "When to Use", "How to Use", and AM/PM/Weekly ritual timelines.
+- Interactive post-results conversational beauty advisor ("Ask your IOMA Skin Expert") with context-aware suggested questions and dynamic routine adaptation.
+- One-click "Add Complete Routine to Bag" + individual product add with stock & database price checks.
+- Private MinIO storage with signed temporary URLs, explicit consent records, and ownership authorization.
+- Consultation saving to customer account (`/diagnosis/history`), Day 7 comfort follow-up, Day 28 reassessment invitation, Before/After cosmetic comparison, and human expert escalation to partner clinic/spa bookings.
+- Multilingual translation across English, French, and Arabic (full RTL layout support).
+- Automated tests: unit tests for profile/adaptive/recommendation/advisor services, integration tests for catalog retrieval and security authorization, and Playwright E2E suites across breakpoints (390px–1440px).
+
+**Dependencies**: Sprints 1 (auth/storage), 4 (commerce/cart), 6 (diagnosis baseline), 7 (expert appointment booking).
+
+**Acceptance criteria**: End-to-end user journey works against live MongoDB catalogue and Gemini vision provider; legacy questionnaire cleanly deprecated; 3 tiers generated with real database prices; chat provides interactive advice with suggested pills; add-to-cart adds exact variants; follow-up and before-after comparisons functional; passes full typecheck, lint, build, and Playwright test suite.
+
+**Tests**: Unit tests for all AI services (`vision-analysis`, `adaptive-consultation`, `recommendation-engine`, `ai-beauty-advisor`, `follow-up`); Playwright E2E journey in `e2e/ai-skin-expert.spec.ts`.
