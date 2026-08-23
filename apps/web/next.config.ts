@@ -33,7 +33,9 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    const apiTarget = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+    const isDocker = process.env.NODE_ENV === "production" || !!process.env.INTERNAL_API_URL;
+    const defaultApi = isDocker ? "http://api:4000" : "http://localhost:4000";
+    const apiTarget = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || defaultApi;
     return [
       {
         source: "/api/:path*",
