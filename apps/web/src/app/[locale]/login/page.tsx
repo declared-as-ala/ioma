@@ -25,9 +25,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { useSearchParams } from "next/navigation";
+
 export default function LoginPage() {
   const t = useTranslations("Login");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
   const mutation = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [accountType, setAccountType] = useState<"client" | "pro">("client");
@@ -40,6 +44,10 @@ export default function LoginPage() {
   function onSubmit(values: LoginInput) {
     mutation.mutate(values, {
       onSuccess: () => {
+        if (redirectUrl) {
+          router.push(redirectUrl);
+          return;
+        }
         if (accountType === "pro") {
           router.push("/portal");
         } else {
@@ -252,7 +260,7 @@ export default function LoginPage() {
               <div className="mt-8 border-t border-border/60 pt-6 text-center text-sm text-muted-foreground">
                 <span>{t("noAccount")} </span>
                 <Link
-                  href="/register"
+                  href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
                   className="font-semibold text-foreground underline underline-offset-4 hover:text-ioma-violet transition-colors ms-1"
                 >
                   {t("registerLink")}

@@ -11,10 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRegisterMutation } from "@/hooks/use-auth";
 
+import { useSearchParams } from "next/navigation";
+
 export default function RegisterPage() {
   const t = useTranslations("Register");
   const locale = useLocale() as Locale;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
   const mutation = useRegisterMutation();
 
   const form = useForm<RegisterInput>({
@@ -24,7 +28,13 @@ export default function RegisterPage() {
 
   function onSubmit(values: RegisterInput) {
     mutation.mutate(values, {
-      onSuccess: () => router.push("/account"),
+      onSuccess: () => {
+        if (redirectUrl) {
+          router.push(redirectUrl);
+          return;
+        }
+        router.push("/account");
+      },
     });
   }
 

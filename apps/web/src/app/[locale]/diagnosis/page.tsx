@@ -56,11 +56,10 @@ export default function DiagnosisLandingPage() {
 
   const handleStartConsultation = () => {
     if (!user) {
-      // Direct unauthenticated guest to login or proceed
-      setStep("consent");
-    } else {
-      setStep("consent");
+      router.push("/login?redirect=/diagnosis");
+      return;
     }
+    setStep("consent");
   };
 
   const handleConsentAgreed = () => {
