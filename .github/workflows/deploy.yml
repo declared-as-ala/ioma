@@ -39,7 +39,15 @@ jobs:
     name: Deploy to Production VPS
     needs: [ci-check]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     steps:
+      - name: Validate Deployment Configuration
+        run: |
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then
+            echo "::error::Secret VPS_HOST is missing! Please configure VPS_HOST in GitHub Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
