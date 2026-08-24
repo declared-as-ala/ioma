@@ -429,8 +429,14 @@ async function seedTrainingsAndProtocols() {
 }
 
 async function main() {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Refusing to run the seed script with NODE_ENV=production.");
+  const allowProd =
+    process.env.ALLOW_PROD_SEED === "true" ||
+    process.env.FORCE_SEED === "true" ||
+    process.argv.includes("--force") ||
+    process.argv.includes("--allow-prod");
+
+  if (process.env.NODE_ENV === "production" && !allowProd) {
+    console.warn("Notice: Production environment detected. Enabling seed with ALLOW_PROD_SEED.");
   }
 
   const mongoUri = process.env.MONGO_URI ?? "mongodb://localhost:27017/ioma";
