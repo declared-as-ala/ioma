@@ -38,27 +38,21 @@ describe("ProfessionalApprovedGuard", () => {
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
-  it("should throw ForbiddenException if user is customer/guest/pending/suspended (missing professional_approved role)", () => {
+  it("should throw ForbiddenException if user is customer/guest/pending/suspended (missing professional_approved or admin role)", () => {
     jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(true);
 
     const pendingContext = createMockContext({
       roles: ["customer", "professional_pending"],
     });
-    expect(() => guard.canActivate(pendingContext)).toThrow(
-      "B2B portal access requires an approved professional account.",
-    );
+    expect(() => guard.canActivate(pendingContext)).toThrow(ForbiddenException);
 
     const suspendedContext = createMockContext({
       roles: ["customer", "professional_suspended"],
     });
-    expect(() => guard.canActivate(suspendedContext)).toThrow(
-      "B2B portal access requires an approved professional account.",
-    );
+    expect(() => guard.canActivate(suspendedContext)).toThrow(ForbiddenException);
 
     const customerContext = createMockContext({ roles: ["customer"] });
-    expect(() => guard.canActivate(customerContext)).toThrow(
-      "B2B portal access requires an approved professional account.",
-    );
+    expect(() => guard.canActivate(customerContext)).toThrow(ForbiddenException);
   });
 
   it("should allow access if user has professional_approved role", () => {
@@ -68,5 +62,14 @@ describe("ProfessionalApprovedGuard", () => {
     });
 
     expect(guard.canActivate(approvedContext)).toBe(true);
+  });
+
+  it("should allow access if user has administrator or super_administrator role", () => {
+    jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(true);
+    const adminContext = createMockContext({
+      roles: ["super_administrator"],
+    });
+
+    expect(guard.canActivate(adminContext)).toBe(true);
   });
 });

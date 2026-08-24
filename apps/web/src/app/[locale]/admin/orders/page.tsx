@@ -26,7 +26,7 @@ export default function AdminOrdersPage() {
     error,
   } = useQuery<OrderRow[]>({
     queryKey: ["admin", "orders"],
-    queryFn: () => apiFetch("/orders/my"),
+    queryFn: () => apiFetch("/orders"),
   });
 
   const columns = useMemo<ColumnDef<OrderRow>[]>(

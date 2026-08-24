@@ -138,6 +138,10 @@ export class OrdersService {
     return this.orderModel.find({ userId }).sort({ createdAt: -1 }).lean();
   }
 
+  async listAll() {
+    return this.orderModel.find().sort({ createdAt: -1 }).lean();
+  }
+
   async listB2B(userId: string) {
     return this.orderModel.find({ userId, type: "b2b" }).sort({ createdAt: -1 }).lean();
   }

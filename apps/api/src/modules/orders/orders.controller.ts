@@ -51,7 +51,20 @@ export class OrdersController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  listOwn(@CurrentUser() user: JwtPayload) {
+  list(@CurrentUser() user: JwtPayload) {
+    const isAdmin =
+      user.roles.includes("administrator") ||
+      user.roles.includes("super_administrator");
+
+    if (isAdmin) {
+      return this.ordersService.listAll();
+    }
+    return this.ordersService.listOwn(user.sub);
+  }
+
+  @Get("my")
+  @UseGuards(JwtAuthGuard)
+  listMy(@CurrentUser() user: JwtPayload) {
     return this.ordersService.listOwn(user.sub);
   }
 

@@ -30,9 +30,14 @@ export class ProfessionalApprovedGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException("Authentication required for B2B portal.");
     }
-    if (!user.roles.includes("professional_approved")) {
+    const hasAccess =
+      user.roles.includes("professional_approved") ||
+      user.roles.includes("administrator") ||
+      user.roles.includes("super_administrator");
+
+    if (!hasAccess) {
       throw new ForbiddenException(
-        "B2B portal access requires an approved professional account.",
+        "B2B portal access requires an approved professional account or administrative privileges.",
       );
     }
     return true;
