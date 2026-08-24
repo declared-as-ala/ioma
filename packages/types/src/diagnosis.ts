@@ -27,18 +27,34 @@ export interface ImageQualityAssessment {
   brightness: "low" | "optimal" | "high";
   clarity: "sharp" | "acceptable" | "blurry";
   faceCentered: boolean;
+  faceTooFar?: boolean;
+  lightingAcceptable?: boolean;
+  retakeAdvice?: LocalizedText;
   notes?: string;
 }
 
+export interface CosmeticObservationDetail {
+  score: number;
+  level: string;
+  visibleArea: string;
+  confidence: number;
+  explanation: string;
+  uncertaintyNote?: string;
+}
+
 export interface VisionObservations {
-  hydrationAppearance: { score: number; level: string; note: string };
-  visiblePores: { score: number; level: string; note: string };
-  rednessAppearance: { score: number; level: string; note: string };
-  pigmentationAppearance: { score: number; level: string; note: string };
-  fineLinesAppearance: { score: number; level: string; note: string };
-  textureAppearance: { score: number; level: string; note: string };
-  radianceAppearance: { score: number; level: string; note: string };
-  imperfectionsAppearance: { score: number; level: string; note: string };
+  hydrationAppearance: CosmeticObservationDetail;
+  visiblePores: CosmeticObservationDetail;
+  rednessAppearance: CosmeticObservationDetail;
+  pigmentationAppearance: CosmeticObservationDetail;
+  fineLinesAppearance: CosmeticObservationDetail;
+  textureAppearance: CosmeticObservationDetail;
+  radianceAppearance: CosmeticObservationDetail;
+  imperfectionsAppearance: CosmeticObservationDetail;
+  oilinessAppearance?: CosmeticObservationDetail;
+  drynessAppearance?: CosmeticObservationDetail;
+  underEyeAppearance?: CosmeticObservationDetail;
+  visibleFirmness?: CosmeticObservationDetail;
 }
 
 export interface CurrentSkincareRoutine {
@@ -48,7 +64,9 @@ export interface CurrentSkincareRoutine {
   exfoliant?: boolean;
   sunscreen?: boolean;
   moisturizer?: string;
+  eyeCream?: string;
   rawText?: string;
+  preservedProducts?: string[];
 }
 
 export interface DubaiClimateContext {
@@ -56,6 +74,7 @@ export interface DubaiClimateContext {
   sunExposure: "low" | "moderate" | "high";
   heatSensitivity?: "low" | "moderate" | "high";
   frequentTravel?: boolean;
+  tightnessInAC?: boolean;
 }
 
 export interface SkinPriority {
@@ -63,6 +82,7 @@ export interface SkinPriority {
   rank: number;
   title: LocalizedText;
   rationale: LocalizedText;
+  targetVisualConcern?: string;
 }
 
 export interface SkinProfile {
@@ -76,6 +96,7 @@ export interface SkinProfile {
   routinePreference: RoutineComplexityPreference;
   budgetPreference: string;
   confidence: number;
+  expertConsultationSummary?: LocalizedText;
 }
 
 export interface RecommendedProduct {
@@ -95,6 +116,7 @@ export interface RecommendedProduct {
   inStock: boolean;
   image?: string;
   range: DiagnosisRangeSummary;
+  targetPriorityId?: string;
 }
 
 export interface WeeklyRitualStep {
@@ -111,6 +133,7 @@ export interface RoutineTierData {
   morningSteps: RecommendedProduct[];
   eveningSteps: RecommendedProduct[];
   weeklyRitual: WeeklyRitualStep[];
+  budgetTier?: "essential" | "balanced" | "premium";
 }
 
 export interface AdaptiveQuestionOption {
@@ -137,6 +160,7 @@ export interface AiChatMessage {
   content: string;
   createdAt: string;
   suggestedQuestions?: string[];
+  audioUrl?: string;
 }
 
 export interface FollowUpCheckin {

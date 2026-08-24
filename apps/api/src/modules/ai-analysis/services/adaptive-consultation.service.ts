@@ -32,7 +32,7 @@ export class AdaptiveConsultationService {
     const questions: AdaptiveQuestion[] = [];
 
     // 1. Contextual Hydration & Barrier question
-    if (observations.hydrationAppearance.score < 55) {
+    if (observations.hydrationAppearance.score < 60) {
       questions.push({
         id: "q_hydration_tightness",
         questionKey: "tightnessAfterCleansing",
@@ -83,7 +83,7 @@ export class AdaptiveConsultationService {
     }
 
     // 2. Sensitivity or Redness question if redness is detected
-    if (observations.rednessAppearance.score > 45 || detectedSkinType === "sensitive") {
+    if (observations.rednessAppearance.score > 40 || detectedSkinType === "sensitive") {
       questions.push({
         id: "q_sensitivity_triggers",
         questionKey: "sensitivityTriggers",
@@ -123,7 +123,48 @@ export class AdaptiveConsultationService {
       });
     }
 
-    // 3. Current Skincare Routine (Natural Language Input)
+    // 3. Pigmentation / Sun spots question if detected
+    if (observations.pigmentationAppearance.score > 40) {
+      questions.push({
+        id: "q_pigmentation_history",
+        questionKey: "pigmentationHistory",
+        category: "goals",
+        title: {
+          en: "Have these tone variations appeared recently or over time?",
+          fr: "Ces variations de teint sont-elles récentes ou installées depuis longtemps ?",
+          ar: "هل ظهرت هذه التصبغات أو البقع حديثاً أم أنها موجودة منذ فترة طويلة؟",
+        },
+        type: "single",
+        options: [
+          {
+            value: "recent_sun",
+            label: {
+              en: "Appeared recently following intense sun or outdoor exposure",
+              fr: "Apparues récemment après une exposition solaire intense",
+              ar: "ظهرت حديثًا بعد التعرض القوي للشمس في الخارج",
+            },
+          },
+          {
+            value: "long_term",
+            label: {
+              en: "Long-standing spots requiring gentle brightening",
+              fr: "Taches anciennes nécessitant un éclaircissement doux",
+              ar: "بقع قديمة وثابتة تحتاج إلى تفتيح لطيف وتوحيد للون",
+            },
+          },
+          {
+            value: "post_blemish",
+            label: {
+              en: "Marks left after past blemishes or irritation",
+              fr: "Marques résiduelles après d'anciennes imperfections",
+              ar: "آثار متبقية بعد بثور أو تهيجات سابقة",
+            },
+          },
+        ],
+      });
+    }
+
+    // 4. Current Skincare Routine (Natural Language Input)
     questions.push({
       id: "q_current_routine",
       questionKey: "currentRoutineProducts",
@@ -140,9 +181,9 @@ export class AdaptiveConsultationService {
       },
       type: "text",
       placeholder: {
-        en: "e.g., Gentle gel cleanser, Vitamin C serum in the morning, Retinol 2x a week, daily SPF 50...",
-        fr: "ex: Nettoyant doux, Sérum Vitamine C le matin, Rétinol 2x par semaine, SPF 50 quotidien...",
-        ar: "مثال: غسول لطيف، سيروم فيتامين سي صباحًا، ريتينول مرتين أسبوعيًا، واقي شمس يومي...",
+        en: "e.g., CeraVe gentle cleanser, Vitamin C serum in morning, Retinol 2x a week, daily SPF 50...",
+        fr: "ex: Nettoyant doux CeraVe, Sérum Vitamine C le matin, Rétinol 2x par semaine, SPF 50...",
+        ar: "مثال: غسول سيرافي اللطيف، سيروم فيتامين سي صباحًا، ريتينول مرتين أسبوعيًا، واقي شمس يومي...",
       },
       contextReason: {
         en: "We respect your current favourites and build your IOMA ritual synergistically around them.",
@@ -151,7 +192,7 @@ export class AdaptiveConsultationService {
       },
     });
 
-    // 4. Dubai Climate & AC Exposure
+    // 5. Dubai Climate & AC Exposure
     questions.push({
       id: "q_climate_ac",
       questionKey: "acAndSunExposure",
@@ -159,7 +200,7 @@ export class AdaptiveConsultationService {
       title: {
         en: "How much of your day is spent in air-conditioned environments?",
         fr: "Combien de temps passez-vous quotidiennement en environnement climatisé ?",
-        ar: "كم تقضين من يومك في بيئات مكيفة الهواء؟",
+        ar: "كم تقضين من يومك في بيئات مكيفة الهواء في دبي؟",
       },
       type: "single",
       options: [
@@ -190,7 +231,7 @@ export class AdaptiveConsultationService {
       ],
     });
 
-    // 5. Primary Skincare Goal
+    // 6. Primary Skincare Goal
     questions.push({
       id: "q_primary_goal",
       questionKey: "primaryGoal",
@@ -253,7 +294,7 @@ export class AdaptiveConsultationService {
       ],
     });
 
-    // 6. Routine Complexity Preference
+    // 7. Routine Complexity & Budget Preference
     questions.push({
       id: "q_routine_complexity",
       questionKey: "routineComplexity",
@@ -300,30 +341,62 @@ export class AdaptiveConsultationService {
    */
   parseRoutineText(text?: string): CurrentSkincareRoutine {
     if (!text || text.trim().length === 0) {
-      return { rawText: "" };
+      return { rawText: "", preservedProducts: [] };
     }
 
     const lower = text.toLowerCase();
+    const preserved: string[] = [];
+
+    const hasCleanser =
+      lower.includes("cleanser") ||
+      lower.includes("gel") ||
+      lower.includes("foam") ||
+      lower.includes("nettoyant") ||
+      lower.includes("cerave") ||
+      lower.includes("cetaphil") ||
+      lower.includes("غسول");
+
+    if (hasCleanser) {
+      preserved.push("Current Gentle Cleanser");
+    }
+
+    const hasVitC =
+      lower.includes("vitamin c") ||
+      lower.includes("vitamine c") ||
+      lower.includes("vit c") ||
+      lower.includes("ascorbic") ||
+      lower.includes("فيتامين سي");
+
+    if (hasVitC) {
+      preserved.push("Morning Vitamin C");
+    }
+
+    const hasRetinol =
+      lower.includes("retinol") ||
+      lower.includes("retinoid") ||
+      lower.includes("tretinoin") ||
+      lower.includes("rétinol") ||
+      lower.includes("ريتينول");
+
+    if (hasRetinol) {
+      preserved.push("Evening Retinoid Treatment");
+    }
+
+    const hasSPF =
+      lower.includes("spf") ||
+      lower.includes("sunscreen") ||
+      lower.includes("sun") ||
+      lower.includes("solaire") ||
+      lower.includes("واقي");
+
+    if (hasSPF) {
+      preserved.push("Daily High-Protection SPF");
+    }
+
     return {
-      cleanser:
-        lower.includes("cleanser") ||
-        lower.includes("gel") ||
-        lower.includes("foam") ||
-        lower.includes("nettoyant") ||
-        lower.includes("غسول")
-          ? text.slice(0, 80)
-          : undefined,
-      vitaminC:
-        lower.includes("vitamin c") ||
-        lower.includes("vitamine c") ||
-        lower.includes("vit c") ||
-        lower.includes("فيتامين سي"),
-      retinoid:
-        lower.includes("retinol") ||
-        lower.includes("retinoid") ||
-        lower.includes("tretinoin") ||
-        lower.includes("rétinol") ||
-        lower.includes("ريتينول"),
+      cleanser: hasCleanser ? text.slice(0, 80) : undefined,
+      vitaminC: hasVitC,
+      retinoid: hasRetinol,
       exfoliant:
         lower.includes("aha") ||
         lower.includes("bha") ||
@@ -332,12 +405,7 @@ export class AdaptiveConsultationService {
         lower.includes("acid") ||
         lower.includes("acide") ||
         lower.includes("تقشير"),
-      sunscreen:
-        lower.includes("spf") ||
-        lower.includes("sunscreen") ||
-        lower.includes("sun") ||
-        lower.includes("solaire") ||
-        lower.includes("واقي"),
+      sunscreen: hasSPF,
       moisturizer:
         lower.includes("cream") ||
         lower.includes("moisturizer") ||
@@ -347,6 +415,7 @@ export class AdaptiveConsultationService {
           ? text.slice(0, 80)
           : undefined,
       rawText: text.trim(),
+      preservedProducts: preserved,
     };
   }
 
@@ -385,6 +454,7 @@ export class AdaptiveConsultationService {
       sunExposure: "moderate",
       heatSensitivity: sensitivityTrigger === "frequent_reactivity" ? "high" : "moderate",
       frequentTravel: false,
+      tightnessInAC: acExposure === "high" || tightness === "very_tight",
     };
 
     // Calculate ranked priorities (01 to 04)
@@ -393,6 +463,13 @@ export class AdaptiveConsultationService {
       primaryGoal,
       skinType,
       acExposure,
+    );
+
+    const expertSummary = this.generateExpertSummary(
+      skinType,
+      priorities,
+      currentRoutine,
+      climateContext,
     );
 
     return {
@@ -414,6 +491,44 @@ export class AdaptiveConsultationService {
       routinePreference: inputs.routinePreference || "balanced",
       budgetPreference: inputs.budgetPreference || "no_preference",
       confidence: 0.94,
+      expertConsultationSummary: expertSummary,
+    };
+  }
+
+  private generateExpertSummary(
+    skinType: SkinType,
+    priorities: SkinPriority[],
+    currentRoutine: CurrentSkincareRoutine,
+    climate: DubaiClimateContext,
+  ): { en: string; fr: string; ar: string } {
+    const p1 = priorities[0]?.title.en || "Hydration";
+    const hasRetinol = currentRoutine.retinoid;
+    const hasCleanser = currentRoutine.cleanser;
+
+    const enRetinolNote = hasRetinol
+      ? " We have calibrated your ritual to seamlessly layer with your evening retinoid."
+      : "";
+    const frRetinolNote = hasRetinol
+      ? " Nous avons calibré votre rituel pour s'associer parfaitement à votre rétinol du soir."
+      : "";
+    const arRetinolNote = hasRetinol
+      ? " تم تصميم الروتين ليتناغم تمامًا مع استخدامك للريتينول المسائي."
+      : "";
+
+    const enCleanserNote = hasCleanser
+      ? " You can comfortably keep your current cleanser while we focus on the treatment serums and barrier creams."
+      : "";
+    const frCleanserNote = hasCleanser
+      ? " Vous pouvez tout à fait conserver votre nettoyant habituel ; nous concentrons l'action sur les sérums experts et la crème barrière."
+      : "";
+    const arCleanserNote = hasCleanser
+      ? " يمكنكِ الاحتفاظ بغسولكِ المعتاد بينما نركز على السيرومات العلاجية وكريم الحماية."
+      : "";
+
+    return {
+      en: `Your skin exhibits a ${skinType} profile with a primary focus on ${p1}.${enCleanserNote}${enRetinolNote} Under continuous Dubai AC conditions, our recommendation prioritizes cellular water infusion and lipid mantle protection.`,
+      fr: `Votre peau présente un profil ${skinType} avec une priorité essentielle axée sur ${priorities[0]?.title.fr || "l'hydratation"}.${frCleanserNote}${frRetinolNote} Face à la climatisation continue de Dubaï, notre recommandation privilégie l'infusion d'eau cellulaire et le renfort lipidique.`,
+      ar: `تُظهر بشرتكِ نمطاً ${skinType === "dry" ? "جافاً" : skinType === "oily" ? "دهنياً" : skinType === "sensitive" ? "حساساً" : "مختلطاً"} مع أولوية قصوى لـ ${priorities[0]?.title.ar || "الترطيب"}.${arCleanserNote}${arRetinolNote} لمواجهة جفاف التكييف المستمر في دبي، نركز على تغذية الخلايا بالماء وحماية الغشاء الدهني الطبيعي.`,
     };
   }
 
@@ -432,6 +547,7 @@ export class AdaptiveConsultationService {
       rationaleEn: string;
       rationaleFr: string;
       rationaleAr: string;
+      targetVisualConcern: string;
     }[] = [];
 
     // Hydration priority
@@ -452,6 +568,7 @@ export class AdaptiveConsultationService {
         "Restaure l'équilibre hydrique cellulaire et prévient l'évaporation causée par la climatisation continue.",
       rationaleAr:
         "يستعيد التوازن المائي للخلايا ويمنع فقدان الرطوبة الناتج عن التكييف المستمر.",
+      targetVisualConcern: "hydrationAppearance",
     });
 
     // Barrier & Sensitivity
@@ -471,6 +588,7 @@ export class AdaptiveConsultationService {
         "Renforce le film hydrolipidique pour protéger contre la réactivité environnementale et les chocs thermiques.",
       rationaleAr:
         "يعزز الغشاء الدهني المائي للحماية من التحسس البيئي والصدمات الحرارية.",
+      targetVisualConcern: "rednessAppearance",
     });
 
     // Radiance & Energy
@@ -490,6 +608,7 @@ export class AdaptiveConsultationService {
         "Revitalise la microcirculation et apporte des antioxydants énergisants anti-fatigue.",
       rationaleAr:
         "ينشط الدورة الدموية الدقيقة ويوفر مضادات أكسدة فعالة لمكافحة مظهر الإجهاد.",
+      targetVisualConcern: "radianceAppearance",
     });
 
     // Firmness & Youth Renewal
@@ -507,6 +626,7 @@ export class AdaptiveConsultationService {
       rationaleFr:
         "Soutient la synthèse de collagène et raffermit l'élasticité cutanée sur les zones d'expression.",
       rationaleAr: "يدعم إنتاج الكولاجين ويعزز مرونة الجلد على خطوط التعبير.",
+      targetVisualConcern: "fineLinesAppearance",
     });
 
     // Pores & Balance
@@ -524,6 +644,7 @@ export class AdaptiveConsultationService {
         "Regulates sebum flow and clarifies the cutaneous micro-relief without drying.",
       rationaleFr: "Régule le sébum et clarifie le micro-relief sans assécher.",
       rationaleAr: "ينظم الإفرازات الدهنية وينقي الملمس الدقيق للبشرة دون أن يجففها.",
+      targetVisualConcern: "visiblePores",
     });
 
     list.sort((a, b) => b.score - a.score);
@@ -533,6 +654,7 @@ export class AdaptiveConsultationService {
       rank: idx + 1,
       title: { en: item.titleEn, fr: item.titleFr, ar: item.titleAr },
       rationale: { en: item.rationaleEn, fr: item.rationaleFr, ar: item.rationaleAr },
+      targetVisualConcern: item.targetVisualConcern,
     }));
   }
 }

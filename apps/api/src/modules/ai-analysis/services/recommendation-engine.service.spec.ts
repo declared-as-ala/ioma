@@ -30,8 +30,8 @@ describe("RecommendationEngineService", () => {
     {
       product: {
         _id: "prod-1",
-        slug: "hydra-serum-intense",
-        name: { en: "Hydra Intense Serum", fr: "Sérum Hydra Intense", ar: "سيروم هيدرا" },
+        slug: "serum-hydratant-optimum",
+        name: { en: "Optimum Hydration Serum", fr: "Sérum Hydratant Optimum", ar: "سيروم هيدرا" },
         shortBenefit: { en: "Hydration boost", fr: "Booste l'hydratation", ar: "ترطيب" },
         routineStep: "both",
         howToUse: { en: "Apply AM/PM", fr: "Appliquer", ar: "يستخدم" },
@@ -57,8 +57,8 @@ describe("RecommendationEngineService", () => {
     {
       product: {
         _id: "prod-2",
-        slug: "hydra-creme-riche",
-        name: { en: "Hydra Rich Cream", fr: "Crème Hydra Riche", ar: "كريم هيدرا" },
+        slug: "gel-fraicheur-hydratant",
+        name: { en: "Hydra Fresh Gel Cream", fr: "Gel Fraîcheur Hydratant", ar: "كريم هيدرا" },
         shortBenefit: { en: "Rich comfort", fr: "Confort riche", ar: "راحة" },
         routineStep: "both",
         howToUse: { en: "Apply as last step", fr: "Appliquer", ar: "يستخدم" },
@@ -84,8 +84,8 @@ describe("RecommendationEngineService", () => {
     {
       product: {
         _id: "prod-3",
-        slug: "purete-gel-nettoyant",
-        name: { en: "Pureté Cleansing Gel", fr: "Gel Nettoyant Pureté", ar: "جل منظف" },
+        slug: "mousse-tonique-astringente",
+        name: { en: "Astringent Tonic Cleansing Foam", fr: "Mousse Tonique Astringente", ar: "جل منظف" },
         shortBenefit: { en: "Gentle cleanse", fr: "Nettoie en douceur", ar: "تنظيف" },
         routineStep: "both",
         howToUse: { en: "Wash face", fr: "Laver", ar: "غسيل" },
@@ -142,5 +142,32 @@ describe("RecommendationEngineService", () => {
     expect(firstProduct.whyThisProduct.en).toBeDefined();
     expect(firstProduct.priceMinor).toBeGreaterThan(0);
     expect(firstProduct.inStock).toBe(true);
+  });
+
+  it("PROVES AI CANNOT RECOMMEND ANY PRODUCT NOT IN MONGODB (Prevents Hallucination)", async () => {
+    const result = await service.generateRoutines(mockProfile);
+
+    const validMongoSkus = new Set(
+      mockCatalogue.flatMap((item) => item.variants.map((v) => v.sku)),
+    );
+    const validMongoProductIds = new Set(
+      mockCatalogue.map((item) => item.product._id.toString()),
+    );
+
+    const allRecommendedProducts = [
+      ...result.essential.morningSteps,
+      ...result.essential.eveningSteps,
+      ...result.complete.morningSteps,
+      ...result.complete.eveningSteps,
+      ...result.premium.morningSteps,
+      ...result.premium.eveningSteps,
+    ];
+
+    expect(allRecommendedProducts.length).toBeGreaterThan(0);
+
+    for (const rec of allRecommendedProducts) {
+      expect(validMongoSkus.has(rec.sku)).toBe(true);
+      expect(validMongoProductIds.has(rec.productId)).toBe(true);
+    }
   });
 });
