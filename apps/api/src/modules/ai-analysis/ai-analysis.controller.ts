@@ -120,6 +120,26 @@ export class AiAnalysisController {
     return this.aiAnalysisService.selectTier(id, user.sub, body.tier);
   }
 
+  @Get(":id/avatar-video")
+  @UseGuards(JwtAuthGuard)
+  getAvatarSpeech(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body?: { locale?: "en" | "ar" },
+  ) {
+    return this.aiAnalysisService.getAvatarSpeech(id, user.sub, body?.locale || "en");
+  }
+
+  @Post(":id/avatar-video")
+  @UseGuards(JwtAuthGuard)
+  generateAvatarSpeech(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body?: { locale?: "en" | "ar" },
+  ) {
+    return this.aiAnalysisService.getAvatarSpeech(id, user.sub, body?.locale || "en");
+  }
+
   @Post(":id/chat")
   @UseGuards(JwtAuthGuard)
   askAdvisor(

@@ -25,8 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { RoutineTierCard } from "@/components/diagnosis/routine-tier-card";
 import { AiChatConsultant } from "@/components/diagnosis/ai-chat-consultant";
-import { AiExpertPresence } from "@/components/diagnosis/ai-expert-presence";
-import { useVoiceAdvisor } from "@/hooks/use-voice-advisor";
+import { FemaleAvatarConsultant } from "@/components/diagnosis/female-avatar-consultant";
 import {
   Calendar,
   Trash2,
@@ -61,16 +60,9 @@ export default function AiDiagnosisResultPage({
   const deleteAnalysis = useDeleteAiAnalysis();
   const askAdvisor = useAskAdvisor(id);
 
-  const {
-    speak,
-    stopSpeaking,
-    toggleMute,
-    isSpeaking,
-    isMuted,
-  } = useVoiceAdvisor(locale);
-
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [highlightedTopic, setHighlightedTopic] = useState<string | null>(null);
 
   if (isLoading || !result) {
     return (
@@ -184,29 +176,57 @@ export default function AiDiagnosisResultPage({
               <p>{t("cosmeticDisclaimerBody")}</p>
             </div>
 
-            {/* Visual Indicators Bars */}
+            {/* Visual Indicators Bars (Photo-Derived Only) */}
             {result.indicators && (
-              <div className="border border-border/80 bg-card rounded-xl p-6 shadow-sm space-y-5">
-                <h3 className="font-display text-sm uppercase tracking-widest text-foreground font-medium">
-                  {t("indicatorsTitle")}
+              <div
+                className={`border bg-card rounded-xl p-6 shadow-sm space-y-5 transition-all duration-300 ${
+                  highlightedTopic === "hydration"
+                    ? "border-amber-400 ring-2 ring-amber-400/40 shadow-lg shadow-amber-500/10"
+                    : "border-border/80"
+                }`}
+              >
+                <h3 className="font-display text-sm uppercase tracking-widest text-foreground font-medium flex items-center justify-between">
+                  <span>{t("indicatorsTitle")}</span>
+                  <span className="text-[10px] text-muted-foreground font-sans lowercase tracking-normal">
+                    (derived strictly from photo)
+                  </span>
                 </h3>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                  {AI_INDICATOR_KEYS.map((key) => (
-                    <div key={key} className="text-xs space-y-1.5">
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">{tIndicators(key)}</dt>
-                        <dd className="font-semibold text-foreground">
-                          {result.indicators![key]} / 100
-                        </dd>
+                  {AI_INDICATOR_KEYS.map((key) => {
+                    const isKeyHighlighted =
+                      (highlightedTopic === "hydration" && key === "hydration") ||
+                      (highlightedTopic === "texture" && key === "texture") ||
+                      (highlightedTopic === "redness" && key === "redness") ||
+                      (highlightedTopic === "pores" && key === "pores") ||
+                      (highlightedTopic === "pigmentation" && key === "spots") ||
+                      (highlightedTopic === "fineLines" && key === "fineLines");
+
+                    return (
+                      <div
+                        key={key}
+                        className={`text-xs space-y-1.5 p-2 rounded-lg transition-all duration-300 ${
+                          isKeyHighlighted
+                            ? "bg-amber-500/15 ring-1 ring-amber-400/50"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between">
+                          <dt className="text-muted-foreground font-medium">{tIndicators(key)}</dt>
+                          <dd className="font-semibold text-foreground">
+                            {result.indicators![key]} / 100
+                          </dd>
+                        </div>
+                        <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              isKeyHighlighted ? "bg-amber-400" : "bg-foreground"
+                            }`}
+                            style={{ width: `${result.indicators![key]}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-foreground transition-all duration-500"
-                          style={{ width: `${result.indicators![key]}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </dl>
               </div>
             )}
@@ -232,10 +252,23 @@ export default function AiDiagnosisResultPage({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(result.observations).map(([obsKey, obs]) => {
               if (!obs || typeof obs !== "object") return null;
+
+              const isCardHighlighted =
+                (highlightedTopic === "hydration" && obsKey.includes("hydration")) ||
+                (highlightedTopic === "texture" && obsKey.includes("texture")) ||
+                (highlightedTopic === "redness" && obsKey.includes("redness")) ||
+                (highlightedTopic === "pores" && obsKey.includes("Pores")) ||
+                (highlightedTopic === "pigmentation" && obsKey.includes("pigmentation")) ||
+                (highlightedTopic === "fineLines" && obsKey.includes("fineLines"));
+
               return (
                 <div
                   key={obsKey}
-                  className="p-5 rounded-xl border border-border/80 bg-card hover:bg-accent/20 transition-all space-y-3 shadow-sm"
+                  className={`p-5 rounded-xl border bg-card transition-all duration-300 space-y-3 shadow-sm ${
+                    isCardHighlighted
+                      ? "border-amber-400 ring-2 ring-amber-400/40 bg-amber-500/5 shadow-lg shadow-amber-500/10 scale-[1.02]"
+                      : "border-border/80 hover:bg-accent/20"
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-sm text-foreground capitalize">
@@ -267,136 +300,128 @@ export default function AiDiagnosisResultPage({
         </section>
       )}
 
-      {/* 03 & 04: YOUR SKIN PROFILE & RANKED PRIORITIES */}
-      {result.skinProfile && (
-        <section aria-labelledby="section-skin-profile" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Profile Card */}
-          <div className="lg:col-span-5 border border-border/80 p-6 md:p-8 bg-card rounded-xl shadow-sm space-y-5">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                {t("section03Kicker")}
-              </p>
-              <h2 id="section-skin-profile" className="font-display text-2xl text-foreground">
-                {t("section03Title")}
-              </h2>
-            </div>
-
-            <div className="space-y-3 text-xs divide-y divide-border/60">
-              <div className="flex justify-between py-2.5">
-                <span className="text-muted-foreground">{t("profileSkinType")}:</span>
-                <span className="font-medium capitalize text-foreground">
-                  {result.skinProfile.skinType}
-                </span>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span className="text-muted-foreground">{t("profileHydration")}:</span>
-                <span className="font-medium text-foreground">
-                  {result.skinProfile.hydrationTendency}
-                </span>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span className="text-muted-foreground">{t("profileSensitivity")}:</span>
-                <span className="font-medium capitalize text-foreground">
-                  {result.skinProfile.sensitivityLevel}
-                </span>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span className="text-muted-foreground">{t("profileAcExposure")}:</span>
-                <span className="font-medium capitalize text-foreground">
-                  {result.skinProfile.climateContext.acExposure} (Dubai Indoor AC)
-                </span>
-              </div>
-            </div>
-
-            {/* Preserved Routine Products Badge */}
-            {result.skinProfile.currentRoutine?.preservedProducts &&
-              result.skinProfile.currentRoutine.preservedProducts.length > 0 && (
-                <div className="p-4 bg-accent/40 rounded-lg border border-border/60 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <HeartHandshake className="size-4 text-foreground" />
-                    <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-foreground">
-                      {t("preservedProductsTitle")}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {t("preservedProductsNote")}
-                  </p>
-                  <ul className="text-xs font-medium space-y-1 ps-5 list-disc text-foreground">
-                    {result.skinProfile.currentRoutine.preservedProducts.map((p, idx) => (
-                      <li key={idx}>{p}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-          </div>
-
-          {/* Ranked Priorities */}
-          <div className="lg:col-span-7 border border-border/80 p-6 md:p-8 bg-card rounded-xl shadow-sm space-y-5">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                {t("section04Kicker")}
-              </p>
-              <h2 className="font-display text-2xl text-foreground">{t("section04Title")}</h2>
-            </div>
-
-            <div className="space-y-3 pt-1">
-              {result.skinProfile.priorities.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-4 border border-border/80 bg-accent/20 hover:bg-accent/40 transition-all rounded-lg text-xs space-y-1"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-display text-sm font-semibold text-foreground">
-                      0{p.rank} —
-                    </span>
-                    <span className="font-semibold text-sm text-foreground">
-                      {p.title[locale]}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed ps-7">
-                    {p.rationale[locale]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 05: WHAT YOUR SKIN NEEDS (AI EXPERT NARRATIVE + VOICE) */}
-      <section aria-labelledby="section-expert-narrative" className="space-y-6">
+      {/* 03 & 04: FEMALE AI EXPERT TALKING CONSULTATION & PROFILE */}
+      <section aria-labelledby="section-expert-consultation" className="space-y-8">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
             {t("section05Kicker")}
           </p>
-          <h2 id="section-expert-narrative" className="font-display text-2xl md:text-3xl text-foreground">
+          <h2 id="section-expert-consultation" className="font-display text-2xl md:text-3xl text-foreground">
             {t("section05Title")}
           </h2>
         </div>
 
-        <AiExpertPresence
-          isSpeaking={isSpeaking}
-          isMuted={isMuted}
-          onToggleMute={() => {
-            if (isMuted) {
-              toggleMute();
-              if (result.diagnosticNarrative?.[locale]) {
-                speak(result.diagnosticNarrative[locale]);
-              }
-            } else {
-              toggleMute();
-            }
-          }}
-          spokenText={
-            result.diagnosticNarrative?.[locale] ||
-            result.skinProfile?.expertConsultationSummary?.[locale]
-          }
-        />
+        {/* Dual-Column Consultation Layout: Female Talking Expert (Left) + Scientific Profile (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Talking Female AI Beauty Consultant Window */}
+          <div className="lg:col-span-6">
+            <FemaleAvatarConsultant
+              locale={locale as "en" | "ar" | "fr"}
+              analysisId={result.id}
+              narrativeText={result.diagnosticNarrative?.[locale] || result.skinProfile?.expertConsultationSummary?.[locale]}
+              avatarResult={result.avatarVideo}
+              onHighlightTopic={setHighlightedTopic}
+              onAskQuestion={handleSendMessage}
+            />
+          </div>
+
+          {/* Right Column: Evolving Skin Profile & Ranked Priorities */}
+          <div className="lg:col-span-6 space-y-6">
+            {result.skinProfile && (
+              <div className="border border-border/80 p-6 bg-card rounded-xl shadow-sm space-y-5">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                    {t("section03Kicker")}
+                  </p>
+                  <h3 className="font-display text-xl text-foreground">
+                    {t("section03Title")}
+                  </h3>
+                </div>
+
+                <div className="space-y-2.5 text-xs divide-y divide-border/60">
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground">{t("profileSkinType")}:</span>
+                    <span className="font-medium capitalize text-foreground">
+                      {result.skinProfile.skinType}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground">{t("profileHydration")}:</span>
+                    <span className="font-medium text-foreground">
+                      {result.skinProfile.hydrationTendency}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground">{t("profileSensitivity")}:</span>
+                    <span className="font-medium capitalize text-foreground">
+                      {result.skinProfile.sensitivityLevel}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground">{t("profileAcExposure")}:</span>
+                    <span className="font-medium capitalize text-foreground">
+                      {result.skinProfile.climateContext.acExposure} (Dubai Indoor AC)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Preserved Routine Products */}
+                {result.skinProfile.currentRoutine?.preservedProducts &&
+                  result.skinProfile.currentRoutine.preservedProducts.length > 0 && (
+                    <div className="p-3.5 bg-accent/40 rounded-lg border border-border/60 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <HeartHandshake className="size-3.5 text-foreground" />
+                        <p className="text-[0.65rem] uppercase tracking-wider font-semibold text-foreground">
+                          {t("preservedProductsTitle")}
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {t("preservedProductsNote")}
+                      </p>
+                      <ul className="text-xs font-medium space-y-0.5 ps-4 list-disc text-foreground">
+                        {result.skinProfile.currentRoutine.preservedProducts.map((p, idx) => (
+                          <li key={idx}>{p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {/* Ranked Priorities list */}
+                <div className="space-y-2 pt-2">
+                  <p className="text-[0.7rem] uppercase tracking-wider font-semibold text-muted-foreground">
+                    {t("section04Title")}
+                  </p>
+                  {result.skinProfile.priorities.map((p) => (
+                    <div
+                      key={p.id}
+                      className="p-3 border border-border/80 bg-accent/20 rounded-lg text-xs space-y-0.5"
+                    >
+                      <div className="flex items-center gap-2 font-semibold text-foreground">
+                        <span>0{p.rank} —</span>
+                        <span>{p.title[locale]}</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {p.rationale[locale]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* 06, 07, 08: YOUR IOMA RITUAL (ESSENTIAL, COMPLETE, PREMIUM) */}
       {routines && (
-        <section aria-labelledby="section-ioma-ritual" className="space-y-8">
+        <section
+          aria-labelledby="section-ioma-ritual"
+          className={`space-y-8 p-6 md:p-8 rounded-2xl border transition-all duration-500 ${
+            highlightedTopic === "recommendations"
+              ? "border-amber-400 ring-2 ring-amber-400/30 bg-amber-500/5 shadow-2xl shadow-amber-500/10"
+              : "border-border/60 bg-transparent"
+          }`}
+        >
           <div>
             <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
               {t("section06Kicker")}

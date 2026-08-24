@@ -18,6 +18,7 @@ import { AdaptiveConsultationService } from "./services/adaptive-consultation.se
 import { RecommendationEngineService } from "./services/recommendation-engine.service";
 import { AiBeautyAdvisorService } from "./services/ai-beauty-advisor.service";
 import { FollowUpService } from "./services/follow-up.service";
+import { TalkingAvatarService } from "./services/talking-avatar.service";
 
 const VALID_IMAGE = {
   buffer: Buffer.from("fake-image-bytes"),
@@ -91,6 +92,18 @@ describe("AiAnalysisService consent gating", () => {
         {
           provide: FollowUpService,
           useValue: { createCheckin: jest.fn(), compareAnalyses: jest.fn() },
+        },
+        {
+          provide: TalkingAvatarService,
+          useValue: {
+            createSpeechVideo: jest.fn().mockResolvedValue({
+              posterUrl: "/images/ai-expert/eleonore-poster.webp",
+              durationSeconds: 12,
+              subtitles: [],
+              provider: "browser_synth",
+              status: "ready",
+            }),
+          },
         },
       ],
     }).compile();
@@ -199,6 +212,18 @@ describe("AiAnalysisService ownership", () => {
         { provide: RecommendationEngineService, useValue: {} },
         { provide: AiBeautyAdvisorService, useValue: {} },
         { provide: FollowUpService, useValue: {} },
+        {
+          provide: TalkingAvatarService,
+          useValue: {
+            createSpeechVideo: jest.fn().mockResolvedValue({
+              posterUrl: "/images/ai-expert/eleonore-poster.webp",
+              durationSeconds: 12,
+              subtitles: [],
+              provider: "browser_synth",
+              status: "ready",
+            }),
+          },
+        },
       ],
     }).compile();
 

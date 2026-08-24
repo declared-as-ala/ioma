@@ -163,6 +163,34 @@ export interface AiChatMessage {
   audioUrl?: string;
 }
 
+export interface AvatarSpeechSubtitle {
+  startMs: number;
+  endMs: number;
+  text: string;
+  activeConcernKey?: string;
+}
+
+export type AvatarSpeechTopic =
+  | "overview"
+  | "hydration"
+  | "texture"
+  | "redness"
+  | "pigmentation"
+  | "anti_aging"
+  | "recommendations"
+  | "general";
+
+export interface TalkingAvatarResult {
+  jobId?: string;
+  videoUrl?: string;
+  audioUrl?: string;
+  posterUrl: string;
+  durationSeconds: number;
+  subtitles: AvatarSpeechSubtitle[];
+  provider: "heygen" | "did" | "tavus" | "browser_synth";
+  status: "ready" | "processing" | "failed";
+}
+
 export interface FollowUpCheckin {
   day: number;
   completedAt: string;
@@ -193,6 +221,7 @@ export interface AiAnalysisResult {
   eveningRoutine: RoutineVariant[];
   chatHistory: AiChatMessage[];
   suggestedQuestions?: string[];
+  avatarVideo?: TalkingAvatarResult | null;
   followUpCheckins?: FollowUpCheckin[];
   failureReason: string | null;
   createdAt: string | null;

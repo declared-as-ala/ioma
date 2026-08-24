@@ -19,6 +19,9 @@ import { RecommendationEngineService } from "./services/recommendation-engine.se
 import { AiBeautyAdvisorService } from "./services/ai-beauty-advisor.service";
 import { FollowUpService } from "./services/follow-up.service";
 
+import { TalkingAvatarService } from "./services/talking-avatar.service";
+import { TALKING_AVATAR_PROVIDER } from "./providers/avatar-provider.interface";
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -38,6 +41,11 @@ import { FollowUpService } from "./services/follow-up.service";
     RecommendationEngineService,
     AiBeautyAdvisorService,
     FollowUpService,
+    TalkingAvatarService,
+    {
+      provide: TALKING_AVATAR_PROVIDER,
+      useExisting: TalkingAvatarService,
+    },
     GeminiAIProvider,
     MockAIProvider,
     {
@@ -61,6 +69,6 @@ import { FollowUpService } from "./services/follow-up.service";
     },
   ],
   controllers: [AiAnalysisController],
-  exports: [AiAnalysisService],
+  exports: [AiAnalysisService, TalkingAvatarService, TALKING_AVATAR_PROVIDER],
 })
 export class AiAnalysisModule {}
