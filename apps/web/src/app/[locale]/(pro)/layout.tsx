@@ -32,7 +32,10 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const hydrated = useAuthHydrated();
 
-  const isApproved = user?.roles.includes("professional_approved");
+  const isApproved =
+    user?.roles.includes("professional_approved") ||
+    user?.roles.includes("administrator") ||
+    user?.roles.includes("super_administrator");
   const isPending = user?.roles.includes("professional_pending");
 
   useEffect(() => {

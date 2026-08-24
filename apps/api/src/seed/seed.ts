@@ -58,26 +58,58 @@ import { Protocol, ProtocolSchema } from "../modules/protocols/schemas/protocol.
 
 async function seedUsers() {
   const UserModel = mongoose.model(User.name, UserSchema);
+  const passwordHash = await argon2.hash("ChangeMe123!", { type: argon2.argon2id });
 
-  const adminEmail = "admin@ioma-dev.local";
-  const existing = await UserModel.findOne({ email: adminEmail });
-  if (!existing) {
-    const passwordHash = await argon2.hash("ChangeMe123!", { type: argon2.argon2id });
-    await UserModel.create({
-      email: adminEmail,
-      passwordHash,
-      firstName: "IOMA",
-      lastName: "Admin",
-      roles: ["super_administrator"],
-      locale: "en",
-      emailVerifiedAt: new Date(),
-    });
-    console.log(
-      `Seeded admin user: ${adminEmail} / ChangeMe123! (dev only — rotate before any shared use)`,
-    );
-  } else {
-    console.log("Admin user already seeded, skipping.");
-  }
+  // 1. Super Administrator
+  await UserModel.updateOne(
+    { email: "admin@ioma-dev.local" },
+    {
+      $set: {
+        passwordHash,
+        firstName: "IOMA",
+        lastName: "Admin",
+        roles: ["super_administrator"],
+        locale: "en",
+        emailVerifiedAt: new Date(),
+      },
+    },
+    { upsert: true },
+  );
+  console.log("Seeded/Updated admin user: admin@ioma-dev.local / ChangeMe123!");
+
+  // 2. Verified B2B Partner / Spa Professional
+  await UserModel.updateOne(
+    { email: "partner@ioma-dev.local" },
+    {
+      $set: {
+        passwordHash,
+        firstName: "Partner",
+        lastName: "Professional",
+        roles: ["customer", "professional_approved"],
+        locale: "en",
+        emailVerifiedAt: new Date(),
+      },
+    },
+    { upsert: true },
+  );
+  console.log("Seeded/Updated partner user: partner@ioma-dev.local / ChangeMe123!");
+
+  // 3. Regular Customer User
+  await UserModel.updateOne(
+    { email: "user@ioma-dev.local" },
+    {
+      $set: {
+        passwordHash,
+        firstName: "Sarah",
+        lastName: "Customer",
+        roles: ["customer"],
+        locale: "en",
+        emailVerifiedAt: new Date(),
+      },
+    },
+    { upsert: true },
+  );
+  console.log("Seeded/Updated regular customer user: user@ioma-dev.local / ChangeMe123!");
 }
 
 async function seedCatalog() {
