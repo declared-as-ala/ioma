@@ -26,13 +26,17 @@ export class AdaptiveConsultationService {
    * Generates 3-7 contextual consultation questions tailored to the visual skin observations.
    */
   generateQuestions(
-    observations: VisionObservations,
-    detectedSkinType: SkinType,
+    observations: VisionObservations | null | undefined,
+    detectedSkinType: SkinType = "combination",
   ): AdaptiveQuestion[] {
     const questions: AdaptiveQuestion[] = [];
 
+    const hydrationScore = observations?.hydrationAppearance?.score ?? 50;
+    const rednessScore = observations?.rednessAppearance?.score ?? 45;
+    const pigmentationScore = observations?.pigmentationAppearance?.score ?? 30;
+
     // 1. Contextual Hydration & Barrier question
-    if (observations.hydrationAppearance.score < 60) {
+    if (hydrationScore < 70) {
       questions.push({
         id: "q_hydration_tightness",
         questionKey: "tightnessAfterCleansing",
@@ -83,7 +87,7 @@ export class AdaptiveConsultationService {
     }
 
     // 2. Sensitivity or Redness question if redness is detected
-    if (observations.rednessAppearance.score > 40 || detectedSkinType === "sensitive") {
+    if (rednessScore > 40 || detectedSkinType === "sensitive") {
       questions.push({
         id: "q_sensitivity_triggers",
         questionKey: "sensitivityTriggers",
@@ -124,7 +128,7 @@ export class AdaptiveConsultationService {
     }
 
     // 3. Pigmentation / Sun spots question if detected
-    if (observations.pigmentationAppearance.score > 40) {
+    if (pigmentationScore > 35) {
       questions.push({
         id: "q_pigmentation_history",
         questionKey: "pigmentationHistory",

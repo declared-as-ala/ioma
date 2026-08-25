@@ -46,6 +46,10 @@ export function useAdaptiveQuestionsQuery(
     queryKey: ["ai-analysis", id, "questions"],
     queryFn: () => apiFetch<AdaptiveQuestion[]>(`/ai-analysis/${id}/adaptive-questions`),
     enabled: Boolean(id) && enabled,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return Array.isArray(data) && data.length > 0 ? false : 1000;
+    },
   });
 }
 

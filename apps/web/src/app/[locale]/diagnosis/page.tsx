@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Sparkles, Shield, Camera, MessageSquare, HelpCircle, Check } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useAuthHydrated } from "@/hooks/use-auth-hydrated";
 import {
   useAdaptiveQuestionsQuery,
+  useAiAnalysisQuery,
   useRecordAiConsent,
   useSubmitAdaptiveAnswers,
   useSubmitAiAnalysis,
@@ -39,11 +40,25 @@ export default function DiagnosisLandingPage() {
 
   const consent = useRecordAiConsent();
   const submitAnalysis = useSubmitAiAnalysis();
+  const analysisQuery = useAiAnalysisQuery(createdAnalysisId || undefined);
   const adaptiveQuestions = useAdaptiveQuestionsQuery(
     createdAnalysisId || undefined,
-    step === "consultation",
+    step === "consultation" || step === "analyzing",
   );
   const submitAnswers = useSubmitAdaptiveAnswers(createdAnalysisId || "");
+
+  // As soon as analysis has completed or questions are ready, transition to consultation
+  useEffect(() => {
+    if (step === "analyzing" && createdAnalysisId) {
+      if (
+        analysisQuery.data?.status === "completed" ||
+        analysisQuery.data?.observations ||
+        (adaptiveQuestions.data && adaptiveQuestions.data.length > 0)
+      ) {
+        setStep("consultation");
+      }
+    }
+  }, [step, createdAnalysisId, analysisQuery.data, adaptiveQuestions.data]);
 
   if (!hydrated) {
     return (
@@ -289,34 +304,36 @@ export default function DiagnosisLandingPage() {
             <AnalysisLoadingSequence />
           ) : (
             <AdaptiveConsultationFlow
-              analysis={{
-                id: createdAnalysisId,
-                status: "processing",
-                isSimulated: false,
-                imageUrl: null,
-                observations: null,
-                indicators: null,
-                skinProfile: {
-                  skinType: "combination",
-                  hydrationTendency: "Dehydrated under AC",
-                  sensitivityLevel: "moderate",
-                  priorities: [],
-                  goals: ["dehydration"],
-                  currentRoutine: {},
-                  climateContext: { acExposure: "high", sunExposure: "moderate" },
-                  routinePreference: "balanced",
-                  budgetPreference: "no_preference",
-                  confidence: 0.92,
-                },
-                recommendedRange: null,
-                routines: null,
-                activeTier: "complete",
-                morningRoutine: [],
-                eveningRoutine: [],
-                chatHistory: [],
-                failureReason: null,
-                createdAt: new Date().toISOString(),
-              }}
+              analysis={
+                analysisQuery.data || {
+                  id: createdAnalysisId,
+                  status: "processing",
+                  isSimulated: false,
+                  imageUrl: null,
+                  observations: null,
+                  indicators: null,
+                  skinProfile: {
+                    skinType: "combination",
+                    hydrationTendency: "Dehydrated under AC",
+                    sensitivityLevel: "moderate",
+                    priorities: [],
+                    goals: ["dehydration"],
+                    currentRoutine: {},
+                    climateContext: { acExposure: "high", sunExposure: "moderate" },
+                    routinePreference: "balanced",
+                    budgetPreference: "no_preference",
+                    confidence: 0.92,
+                  },
+                  recommendedRange: null,
+                  routines: null,
+                  activeTier: "complete",
+                  morningRoutine: [],
+                  eveningRoutine: [],
+                  chatHistory: [],
+                  failureReason: null,
+                  createdAt: new Date().toISOString(),
+                }
+              }
               questions={adaptiveQuestions.data || []}
               onSubmitAnswers={handleSubmitConsultationAnswers}
               isSubmitting={submitAnswers.isPending}

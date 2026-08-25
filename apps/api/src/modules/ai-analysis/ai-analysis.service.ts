@@ -245,12 +245,8 @@ export class AiAnalysisService {
       throw new ForbiddenException("This analysis belongs to another account.");
     }
 
-    if (!doc.observations) {
-      return [];
-    }
-
     return this.adaptiveConsultation.generateQuestions(
-      doc.observations,
+      doc.observations || null,
       doc.detectedSkinType || "combination",
     );
   }

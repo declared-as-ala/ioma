@@ -103,9 +103,27 @@ export function AdaptiveConsultationFlow({
 
   const currentAnswer = currentQ ? answers[currentQ.questionKey] : undefined;
   const isAnswered =
-    currentQ?.type === "text"
-      ? routineText.trim().length > 0
-      : Boolean(currentAnswer);
+    currentQ?.type === "text" ? routineText.trim().length > 0 : Boolean(currentAnswer);
+
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="text-center max-w-xl mx-auto py-16 space-y-4 animate-in fade-in">
+        <div className="size-12 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center animate-spin">
+          <Sparkles className="size-5 text-amber-500" />
+        </div>
+        <h2 className="font-display text-xl text-foreground">
+          {locale === "ar"
+            ? "جاري تجهيز استشارتكِ المخصصة..."
+            : "Calibrating Your Adaptive Consultation..."}
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          {locale === "ar"
+            ? "يقوم الذكاء الاصطناعي بتحليل ملامح بشرتكِ وإعداد الأسئلة الدقيقة المناسبة لنمط حياتكِ."
+            : "Synthesizing optical indicators into personalized lifestyle and tolerance questions."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
@@ -283,9 +301,7 @@ export function AdaptiveConsultationFlow({
                             }
                           }}
                           className={`text-xs ${
-                            isListening
-                              ? "border-red-500 text-red-500 animate-pulse"
-                              : ""
+                            isListening ? "border-red-500 text-red-500 animate-pulse" : ""
                           }`}
                         >
                           {isListening ? (
@@ -357,9 +373,7 @@ export function AdaptiveConsultationFlow({
               <div className="p-3 bg-accent/40 rounded-lg border border-border/60 flex items-start gap-2.5">
                 <Droplets className="size-4 text-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">
-                    {t("priority1Label")}
-                  </p>
+                  <p className="font-medium text-foreground">{t("priority1Label")}</p>
                   <p className="text-[0.7rem] text-muted-foreground mt-0.5">
                     {t("priority1Desc")}
                   </p>
@@ -368,9 +382,7 @@ export function AdaptiveConsultationFlow({
               <div className="p-3 bg-accent/40 rounded-lg border border-border/60 flex items-start gap-2.5">
                 <Shield className="size-4 text-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">
-                    {t("priority2Label")}
-                  </p>
+                  <p className="font-medium text-foreground">{t("priority2Label")}</p>
                   <p className="text-[0.7rem] text-muted-foreground mt-0.5">
                     {t("priority2Desc")}
                   </p>
@@ -379,9 +391,7 @@ export function AdaptiveConsultationFlow({
               <div className="p-3 bg-accent/40 rounded-lg border border-border/60 flex items-start gap-2.5">
                 <Sun className="size-4 text-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">
-                    {t("priority3Label")}
-                  </p>
+                  <p className="font-medium text-foreground">{t("priority3Label")}</p>
                   <p className="text-[0.7rem] text-muted-foreground mt-0.5">
                     {t("priority3Desc")}
                   </p>
