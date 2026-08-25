@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { RoutineTierCard } from "@/components/diagnosis/routine-tier-card";
 import { AiChatConsultant } from "@/components/diagnosis/ai-chat-consultant";
-import { FemaleAvatarConsultant } from "@/components/diagnosis/female-avatar-consultant";
+import { useVoiceAdvisor } from "@/hooks/use-voice-advisor";
 import {
   Calendar,
   Trash2,
@@ -40,6 +40,8 @@ import {
   Layers,
   MapPin,
   HeartHandshake,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 export default function AiDiagnosisResultPage({
@@ -63,6 +65,8 @@ export default function AiDiagnosisResultPage({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [highlightedTopic, setHighlightedTopic] = useState<string | null>(null);
+
+  const { speak, stopSpeaking, isSpeaking } = useVoiceAdvisor(locale);
 
   if (isLoading || !result) {
     return (
@@ -168,7 +172,9 @@ export default function AiDiagnosisResultPage({
             </div>
           )}
 
-          <div className={`${result.imageUrl ? "md:col-span-8" : "md:col-span-12"} space-y-6`}>
+          <div
+            className={`${result.imageUrl ? "md:col-span-8" : "md:col-span-12"} space-y-6`}
+          >
             <div className="p-5 rounded-xl border border-border/80 bg-accent/30 text-xs text-muted-foreground leading-relaxed space-y-1.5">
               <p className="font-semibold text-foreground uppercase tracking-widest text-[0.7rem]">
                 {t("cosmeticDisclaimerTitle")}
@@ -211,7 +217,9 @@ export default function AiDiagnosisResultPage({
                         }`}
                       >
                         <div className="flex justify-between">
-                          <dt className="text-muted-foreground font-medium">{tIndicators(key)}</dt>
+                          <dt className="text-muted-foreground font-medium">
+                            {tIndicators(key)}
+                          </dt>
                           <dd className="font-semibold text-foreground">
                             {result.indicators![key]} / 100
                           </dd>
@@ -241,7 +249,10 @@ export default function AiDiagnosisResultPage({
             <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
               {t("section02Kicker")}
             </p>
-            <h2 id="section-observations" className="mt-1 font-display text-2xl md:text-3xl text-foreground">
+            <h2
+              id="section-observations"
+              className="mt-1 font-display text-2xl md:text-3xl text-foreground"
+            >
               {t("section02Title")}
             </h2>
             <p className="mt-1 text-xs md:text-sm text-muted-foreground">
@@ -258,7 +269,8 @@ export default function AiDiagnosisResultPage({
                 (highlightedTopic === "texture" && obsKey.includes("texture")) ||
                 (highlightedTopic === "redness" && obsKey.includes("redness")) ||
                 (highlightedTopic === "pores" && obsKey.includes("Pores")) ||
-                (highlightedTopic === "pigmentation" && obsKey.includes("pigmentation")) ||
+                (highlightedTopic === "pigmentation" &&
+                  obsKey.includes("pigmentation")) ||
                 (highlightedTopic === "fineLines" && obsKey.includes("fineLines"));
 
               return (
@@ -300,29 +312,104 @@ export default function AiDiagnosisResultPage({
         </section>
       )}
 
-      {/* 03 & 04: FEMALE AI EXPERT TALKING CONSULTATION & PROFILE */}
+      {/* 03 & 04: EXPERT DIAGNOSTIC CONSULTATION & SCIENTIFIC PROFILE */}
       <section aria-labelledby="section-expert-consultation" className="space-y-8">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
             {t("section05Kicker")}
           </p>
-          <h2 id="section-expert-consultation" className="font-display text-2xl md:text-3xl text-foreground">
+          <h2
+            id="section-expert-consultation"
+            className="font-display text-2xl md:text-3xl text-foreground"
+          >
             {t("section05Title")}
           </h2>
         </div>
 
-        {/* Dual-Column Consultation Layout: Female Talking Expert (Left) + Scientific Profile (Right) */}
+        {/* Dual-Column Consultation Layout: Expert Diagnostic Narrative (Left) + Scientific Profile (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Talking Female AI Beauty Consultant Window */}
-          <div className="lg:col-span-6">
-            <FemaleAvatarConsultant
-              locale={locale as "en" | "ar" | "fr"}
-              analysisId={result.id}
-              narrativeText={result.diagnosticNarrative?.[locale] || result.skinProfile?.expertConsultationSummary?.[locale]}
-              avatarResult={result.avatarVideo}
-              onHighlightTopic={setHighlightedTopic}
-              onAskQuestion={handleSendMessage}
-            />
+          {/* Left Column: Expert Diagnostic Assessment Card */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="relative border border-amber-500/30 p-6 md:p-8 bg-gradient-to-br from-card via-card to-amber-500/5 rounded-2xl shadow-sm space-y-6 overflow-hidden">
+              {/* Top Consultant Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="size-11 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 text-neutral-950 flex items-center justify-center font-display text-sm font-semibold tracking-wider shadow-md">
+                    EP
+                  </div>
+                  <div>
+                    <h3 className="font-display text-base font-medium text-foreground">
+                      {locale === "ar"
+                        ? "إيليونور — خبيرة إيوما باريس"
+                        : "Éléonore — IOMA Paris"}
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground">
+                      {locale === "ar"
+                        ? "كبيرة خبراء التشخيص الجلدي"
+                        : "Lead Diagnostic Skincare Expert"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] uppercase tracking-wider font-semibold">
+                  {locale === "ar" ? "تشخيص معتمد" : "Validated Analysis"}
+                </div>
+              </div>
+
+              {/* Narrative Content */}
+              <div className="space-y-4">
+                <p className="text-xs md:text-sm text-foreground/90 leading-relaxed font-normal">
+                  {result.diagnosticNarrative?.[locale] ||
+                    result.skinProfile?.expertConsultationSummary?.[locale] ||
+                    (locale === "ar"
+                      ? "أظهر التحليل البصري لصورتكِ حاجة واضحة لتعزيز الترطيب الخلوي وحماية الحاجز الواقي للبشرة ضد التكييف المستمر في دبي."
+                      : "Your optical analysis indicates a primary need for deep cellular hydration to shield against continuous indoor air conditioning in Dubai.")}
+                </p>
+              </div>
+
+              {/* Audio Listen Bar */}
+              <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const textToSpeak =
+                      result.diagnosticNarrative?.[locale] ||
+                      result.skinProfile?.expertConsultationSummary?.[locale];
+                    if (textToSpeak) {
+                      if (isSpeaking) {
+                        stopSpeaking();
+                      } else {
+                        speak(textToSpeak);
+                      }
+                    }
+                  }}
+                  className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-medium border transition-all ${
+                    isSpeaking
+                      ? "bg-amber-500/20 border-amber-500 text-amber-500 animate-pulse"
+                      : "bg-accent/60 border-border/80 text-foreground hover:border-amber-500/60 hover:bg-accent"
+                  }`}
+                >
+                  {isSpeaking ? (
+                    <VolumeX className="size-3.5 text-amber-500" />
+                  ) : (
+                    <Volume2 className="size-3.5 text-amber-500" />
+                  )}
+                  <span>
+                    {isSpeaking
+                      ? locale === "ar"
+                        ? "إيقاف الصوت"
+                        : "Pause Audio"
+                      : locale === "ar"
+                        ? "استمعي إلى التقييم الصوتي"
+                        : "Listen to Assessment"}
+                  </span>
+                </button>
+
+                <span className="text-[11px] text-muted-foreground hidden sm:inline-block">
+                  {locale === "ar" ? "صوت خبيرة التجميل" : "AI Voice Consultation"}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Evolving Skin Profile & Ranked Priorities */}
@@ -346,19 +433,25 @@ export default function AiDiagnosisResultPage({
                     </span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-muted-foreground">{t("profileHydration")}:</span>
+                    <span className="text-muted-foreground">
+                      {t("profileHydration")}:
+                    </span>
                     <span className="font-medium text-foreground">
                       {result.skinProfile.hydrationTendency}
                     </span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-muted-foreground">{t("profileSensitivity")}:</span>
+                    <span className="text-muted-foreground">
+                      {t("profileSensitivity")}:
+                    </span>
                     <span className="font-medium capitalize text-foreground">
                       {result.skinProfile.sensitivityLevel}
                     </span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-muted-foreground">{t("profileAcExposure")}:</span>
+                    <span className="text-muted-foreground">
+                      {t("profileAcExposure")}:
+                    </span>
                     <span className="font-medium capitalize text-foreground">
                       {result.skinProfile.climateContext.acExposure} (Dubai Indoor AC)
                     </span>
@@ -379,9 +472,11 @@ export default function AiDiagnosisResultPage({
                         {t("preservedProductsNote")}
                       </p>
                       <ul className="text-xs font-medium space-y-0.5 ps-4 list-disc text-foreground">
-                        {result.skinProfile.currentRoutine.preservedProducts.map((p, idx) => (
-                          <li key={idx}>{p}</li>
-                        ))}
+                        {result.skinProfile.currentRoutine.preservedProducts.map(
+                          (p, idx) => (
+                            <li key={idx}>{p}</li>
+                          ),
+                        )}
                       </ul>
                     </div>
                   )}
@@ -426,7 +521,10 @@ export default function AiDiagnosisResultPage({
             <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
               {t("section06Kicker")}
             </p>
-            <h2 id="section-ioma-ritual" className="mt-1 font-display text-3xl md:text-4xl text-foreground">
+            <h2
+              id="section-ioma-ritual"
+              className="mt-1 font-display text-3xl md:text-4xl text-foreground"
+            >
               {t("section06Title")}
             </h2>
             <p className="mt-1 text-xs md:text-sm text-muted-foreground">
@@ -450,7 +548,10 @@ export default function AiDiagnosisResultPage({
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
             {t("section09Kicker")}
           </p>
-          <h2 id="section-ai-chat" className="font-display text-2xl md:text-3xl text-foreground">
+          <h2
+            id="section-ai-chat"
+            className="font-display text-2xl md:text-3xl text-foreground"
+          >
             {t("section09Title")}
           </h2>
         </div>
@@ -486,7 +587,11 @@ export default function AiDiagnosisResultPage({
           >
             <Link href="/diagnosis/history">{t("viewHistory")}</Link>
           </Button>
-          <Button asChild size="lg" className="uppercase tracking-widest text-xs px-6 shadow-md">
+          <Button
+            asChild
+            size="lg"
+            className="uppercase tracking-widest text-xs px-6 shadow-md"
+          >
             <Link href="/booking">
               <Calendar className="me-2 size-4" />
               {t("bookInstituteAnalysis")}

@@ -36,6 +36,12 @@ export class AiBeautyAdvisorService {
     const openAiKey =
       this.configService.get<string>("OPENAI_API_KEY") || process.env.OPENAI_API_KEY;
 
+    // Detect if the message contains Arabic script
+    const hasArabicChars = /[\u0600-\u06FF]/.test(params.message);
+    const effectiveLocale: "en" | "fr" | "ar" = hasArabicChars
+      ? "ar"
+      : params.locale || "en";
+
     // 1. Safety filter: check if user asks for medical diagnosis
     const lower = params.message.toLowerCase();
     if (
@@ -47,7 +53,7 @@ export class AiBeautyAdvisorService {
       lower.includes("dermatitis") ||
       lower.includes("psoriasis")
     ) {
-      return this.medicalDisclaimerResponse(params.locale);
+      return this.medicalDisclaimerResponse(effectiveLocale);
     }
 
     // 2. Format detailed real MongoDB product knowledge for grounding
@@ -63,14 +69,14 @@ export class AiBeautyAdvisorService {
 
     const systemPrompt = `You are Éléonore, Lead Diagnostic Skincare Consultant for IOMA Paris Dubai.
 Persona: Sophisticated, editorial, calm, scientifically precise, reassuring, luxury French skincare maison.
-You communicate in ${params.locale === "ar" ? "Arabic" : params.locale === "fr" ? "French" : "English"}.
+You communicate in ${effectiveLocale === "ar" ? "Arabic" : effectiveLocale === "fr" ? "French" : "English"}.
 
 CLIENT DIAGNOSTIC PROFILE:
 - Detected Skin Type: ${params.skinProfile.skinType}
 - Hydration Status: ${params.skinProfile.hydrationTendency}
 - Top Priority Concern: ${params.skinProfile.priorities[0]?.title.en || "Hydration"}
 - Dubai Environmental Exposure: AC Exposure = ${params.skinProfile.climateContext.acExposure}, Sun Exposure = ${params.skinProfile.climateContext.sunExposure}
-- Client Current Routine: Cleanser: ${params.skinProfile.currentRoutine.cleanser || "None"}, Active Products: ${params.skinProfile.currentRoutine.rawText || "None specified"}
+- Client Current Routine: Cleanser: ${params.skinProfile.currentRoutine?.cleanser || "None"}, Active Products: ${params.skinProfile.currentRoutine?.rawText || "None specified"}
 - Selected Routine Tier: ${params.activeTierData.tier.toUpperCase()} (${(params.activeTierData.totalPriceMinor / 100).toFixed(0)} AED Total)
 
 AUTHORITATIVE REAL IOMA PRODUCT CATALOGUE (MongoDB Grounded):
@@ -78,10 +84,11 @@ ${productList}
 
 STRICT INSTRUCTIONS:
 1. GROUNDING: Only reference real IOMA products from the list above with exact AED prices. Never invent fake formulas, percentages, or non-existent items.
-2. FINANCIAL RESTRUCTURING: If client asks to make the routine cheaper or remove a product, recommend focusing on the 3 core essentials (Cleanser + Targeted Serum + Moisturizer) with exact price recalculation.
-3. INGREDIENT LAYERING & CURRENT ROUTINE: If client asks about keeping their existing products (cleanser, retinol, Vitamin C, exfoliants), provide specific sequential layering rules (e.g. apply IOMA hydrating serum first, wait 10 mins before retinol, lock with cream).
-4. SENSITIVITY & PORES: Reference their actual skin observations and continuous air-conditioning exposure in Dubai.
-5. Provide a clear, comforting response (2-3 paragraphs) and 3 short, relevant follow-up questions.
+2. GREETINGS: If client says "hi", "hello", "مرحبا", "سلام", greet them warmly, acknowledge their diagnostic profile, and invite their questions about their routine.
+3. FINANCIAL RESTRUCTURING: If client asks to make the routine cheaper or remove a product, recommend focusing on the 3 core essentials (Cleanser + Targeted Serum + Moisturizer) with exact price recalculation.
+4. INGREDIENT LAYERING & CURRENT ROUTINE: If client asks about keeping their existing products (cleanser, retinol, Vitamin C, exfoliants), provide specific sequential layering rules.
+5. SENSITIVITY & PORES: Reference their actual skin observations and continuous air-conditioning exposure in Dubai.
+6. Provide a clear, comforting response (2-3 paragraphs) and 3 short, relevant follow-up questions.
 
 Return valid JSON format:
 {
@@ -89,77 +96,91 @@ Return valid JSON format:
   "suggestedQuestions": ["Question 1", "Question 2", "Question 3"]
 }`;
 
-    // 3. Try Gemini API with correct system_instruction & turn alternation
+    // 3. Try Gemini API with candidate models
     if (geminiKey) {
-      try {
-        const contents: Array<{
-          role: "user" | "model";
-          parts: Array<{ text: string }>;
-        }> = [];
+      const candidateModels = [
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash",
+      ];
 
-        // Build valid alternating conversation history
-        let lastRole: "user" | "model" | null = null;
-        for (const msg of params.chatHistory) {
-          const role = msg.role === "assistant" ? "model" : "user";
-          if (role !== lastRole) {
-            contents.push({ role, parts: [{ text: msg.content }] });
-            lastRole = role;
-          } else if (contents.length > 0) {
-            // Append to previous if same role
-            const lastEntry = contents[contents.length - 1];
-            if (lastEntry) {
-              lastEntry.parts.push({ text: msg.content });
+      // Build conversation history (excluding the current pending message)
+      const previousHistory = params.chatHistory.slice(0, -1);
+      const contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> =
+        [];
+
+      let lastRole: "user" | "model" | null = null;
+      for (const msg of previousHistory) {
+        const role = msg.role === "assistant" ? "model" : "user";
+        if (role !== lastRole) {
+          contents.push({ role, parts: [{ text: msg.content }] });
+          lastRole = role;
+        } else if (contents.length > 0) {
+          const lastEntry = contents[contents.length - 1];
+          if (lastEntry) {
+            lastEntry.parts.push({ text: msg.content });
+          }
+        }
+      }
+
+      if (lastRole === "user") {
+        contents.push({
+          role: "model",
+          parts: [
+            { text: "Understood. How can I assist you further with your IOMA ritual?" },
+          ],
+        });
+      }
+      contents.push({ role: "user", parts: [{ text: params.message }] });
+
+      for (const model of candidateModels) {
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                system_instruction: {
+                  parts: [{ text: systemPrompt }],
+                },
+                contents,
+                generationConfig: {
+                  response_mime_type: "application/json",
+                  temperature: 0.3,
+                },
+              }),
+            },
+          );
+
+          if (response.ok) {
+            const data = (await response.json()) as any;
+            const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textOutput) {
+              const parsed = JSON.parse(textOutput.trim());
+              this.logger.log(
+                `Chatbot responded successfully with Gemini model: ${model}`,
+              );
+              return {
+                message: parsed.message || textOutput,
+                suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
+                  ? parsed.suggestedQuestions.slice(0, 3)
+                  : this.defaultSuggestedQuestions(effectiveLocale),
+              };
             }
+          } else {
+            const errBody = await response.text();
+            this.logger.warn(
+              `Gemini model ${model} returned ${response.status}: ${errBody}`,
+            );
           }
+        } catch (fetchErr) {
+          this.logger.warn(
+            `Gemini model ${model} fetch failed: ${(fetchErr as Error).message}`,
+          );
         }
-
-        // Ensure user message is at the end with role "user"
-        if (lastRole === "user") {
-          contents.push({
-            role: "model",
-            parts: [
-              { text: "Understood. How can I assist you further with your IOMA ritual?" },
-            ],
-          });
-        }
-        contents.push({ role: "user", parts: [{ text: params.message }] });
-
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              system_instruction: {
-                parts: [{ text: systemPrompt }],
-              },
-              contents,
-              generationConfig: {
-                response_mime_type: "application/json",
-                temperature: 0.3,
-              },
-            }),
-          },
-        );
-
-        if (response.ok) {
-          const data = (await response.json()) as any;
-          const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (textOutput) {
-            const parsed = JSON.parse(textOutput.trim());
-            return {
-              message: parsed.message || textOutput,
-              suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
-                ? parsed.suggestedQuestions.slice(0, 3)
-                : this.defaultSuggestedQuestions(params.locale),
-            };
-          }
-        } else {
-          const errBody = await response.text();
-          this.logger.warn(`Gemini API returned ${response.status}: ${errBody}`);
-        }
-      } catch (err) {
-        this.logger.warn("Live Gemini API call failed", err);
       }
     }
 
@@ -171,7 +192,7 @@ Return valid JSON format:
           content: string;
         }> = [
           { role: "system", content: systemPrompt },
-          ...params.chatHistory.map((msg) => ({
+          ...params.chatHistory.slice(0, -1).map((msg) => ({
             role: (msg.role === "assistant" ? "assistant" : "user") as
               "user" | "assistant",
             content: msg.content,
@@ -202,7 +223,7 @@ Return valid JSON format:
               message: parsed.message || content,
               suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
                 ? parsed.suggestedQuestions.slice(0, 3)
-                : this.defaultSuggestedQuestions(params.locale),
+                : this.defaultSuggestedQuestions(effectiveLocale),
             };
           }
         }
@@ -212,7 +233,10 @@ Return valid JSON format:
     }
 
     // 5. Intelligent Multi-Topic Grounded Fallback
-    return this.fallbackAdvisorResponse(params);
+    return this.fallbackAdvisorResponse({
+      ...params,
+      locale: effectiveLocale,
+    });
   }
 
   private medicalDisclaimerResponse(locale: "en" | "fr" | "ar"): AdvisorResponse {
@@ -250,7 +274,7 @@ Return valid JSON format:
   }
 
   private fallbackAdvisorResponse(params: AskAdvisorParams): AdvisorResponse {
-    const q = params.message.toLowerCase();
+    const q = params.message.toLowerCase().trim();
 
     // Identify primary products from active tier
     const topSerum =
@@ -299,6 +323,69 @@ Return valid JSON format:
         (topSerum ? topSerum.priceMinor : 38000) +
         (topCream ? topCream.priceMinor : 42000)) /
       100;
+
+    // GREETINGS & CASUAL OPENERS ("hi", "hello", "hey", "مرحبا", "سلام", "bonjour")
+    if (
+      q === "hi" ||
+      q === "hello" ||
+      q === "hey" ||
+      q === "bonjour" ||
+      q === "salut" ||
+      q === "مرحبا" ||
+      q === "أهلا" ||
+      q === "السلام عليكم" ||
+      q === "صباح الخير" ||
+      q === "مساء الخير" ||
+      q.startsWith("hi ") ||
+      q.startsWith("hello ")
+    ) {
+      if (params.locale === "ar") {
+        return {
+          message: `أهلاً بكِ! أنا إيليونور، خبيرة التشخيص الجلدي في إيوما باريس دبي. لقد حللتُ صورتكِ وحددتُ احتياجات بشرتكِ (${params.skinProfile.skinType || "المختلطة"}). يسعدني الإجابة على أي استفسار حول روتينكِ (${params.activeTierData.tier.toUpperCase()})، أو طريقة استخدام السيروم والكريم، أو كيفية دمج مستحضراتكِ الحالية!`,
+          suggestedQuestions: [
+            "لماذا أحتاج إلى هذا السيروم تحديداً؟",
+            "ما هي الأولوية الأساسية لبشرتي؟",
+            "كيف أدمج الريتينول مع هذا الروتين؟",
+          ],
+        };
+      }
+      return {
+        message: `Hello! I am Éléonore, Lead Diagnostic Skincare Consultant for IOMA Paris Dubai. Based on your optical skin analysis, I have mapped your tailored ${params.activeTierData.tier.toUpperCase()} ritual focusing on **${params.skinProfile.priorities[0]?.title.en || "Hydration & Barrier Defense"}**. How can I assist you with your routine, formulations, or layering steps today?`,
+        suggestedQuestions: [
+          "Why do I need this serum specifically?",
+          "What is my skin's primary priority?",
+          "Can you make the routine cheaper?",
+        ],
+      };
+    }
+
+    // SHORT "WHY" QUESTION
+    if (
+      q === "why" ||
+      q === "why?" ||
+      q === "لماذا" ||
+      q === "لماذا؟" ||
+      q === "pourquoi"
+    ) {
+      if (params.locale === "ar") {
+        return {
+          message: `تم اختيار هذا البروتوكول لأن التحليل البصري لصورتكِ أظهر حاجة فورية لمعالجة **${params.skinProfile.priorities[0]?.title.ar || "الترطيب والحماية"}**. في مناخ دبي، يؤدي التكييف الداخلي المستمر إلى تبخر الرطوبة الخلوية، مما يسبب بهتان البشرة وظهور الخطوط الدقيقة. دمج **${serumName}** مع **${creamName}** يعيد بناء الحاجز الواقي ويمنحكِ نضارة تدوم طوال اليوم.`,
+          suggestedQuestions: [
+            "ما هو دور السيروم في هذا الروتين؟",
+            "كم من الوقت يستغرق ظهور النتائج؟",
+            "هل يمكنني تبسيط الخطوات؟",
+          ],
+        };
+      }
+      return {
+        message: `This ritual was calibrated because your optical diagnosis detected a primary need for **${params.skinProfile.priorities[0]?.title.en || "Hydration & Cellular Resilience"}**. In Dubai, the drastic shift between external heat and dry indoor air conditioning severely compromises your stratum corneum. Combining **${serumName}** with **${creamName}** creates a biomimetic barrier that locks moisture in and protects against daily thermal shocks.`,
+        suggestedQuestions: [
+          "Why do I need this serum specifically?",
+          "What is my secondary skin concern?",
+          "How do I apply these morning and evening?",
+        ],
+      };
+    }
 
     // 1. SPECIFIC INQUIRY: Why do I need this serum?
     if (
@@ -540,8 +627,20 @@ Return valid JSON format:
         ],
       };
     }
+
+    // 9. DEFAULT PERSONALIZED EDITORIAL RESPONSE
+    if (params.locale === "ar") {
+      return {
+        message: `لقد صممتُ روتينكِ (${params.activeTierData.tier.toUpperCase()}) بدقة متناهية بناءً على القراءة البصرية لبشرتكِ (${params.skinProfile.skinType || "المختلطة"}). يركز هذا البروتوكول على الجمع بين **${serumName}** لتجديد الخلايا و**${creamName}** لتأمين درع واقٍ ضد الجفاف المستمر في دبي. يمكنكِ سؤالي عن أي منتج، أو طريقة الاستخدام، أو تعديل الميزانية!`,
+        suggestedQuestions: [
+          "لماذا أحتاج إلى هذا السيروم تحديداً؟",
+          "هل يمكن تخفيض تكلفة الروتين؟",
+          "كيف أدمج منتجاتي الحالية مع هذا البروتوكول؟",
+        ],
+      };
+    }
     return {
-      message: `Your personalized ${params.activeTierData.tier.toUpperCase()} ritual is calibrated to your exact optical analysis (${params.skinProfile.skinType}, ${params.skinProfile.priorities[0]?.title.en || "Hydration"}). By combining **${serumName}** for targeted cellular infusion with **${creamName}** for biomimetic barrier protection, we counter the thermal shocks and constant AC dehydration of the UAE. Feel free to ask about any specific formulation, layering technique, or budget customization!`,
+      message: `Your personalized ${params.activeTierData.tier.toUpperCase()} ritual is calibrated to your exact optical analysis (${params.skinProfile.skinType || "combination"}, ${params.skinProfile.priorities[0]?.title.en || "Hydration"}). By combining **${serumName}** for targeted cellular infusion with **${creamName}** for biomimetic barrier protection, we counter the thermal shocks and constant AC dehydration of the UAE. Feel free to ask about any specific formulation, layering technique, or budget customization!`,
       suggestedQuestions: [
         "Why do I need this serum specifically?",
         "Can you make the routine cheaper?",

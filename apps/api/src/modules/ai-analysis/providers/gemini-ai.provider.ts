@@ -95,44 +95,74 @@ Return a valid JSON object strictly matching this schema:
 }
 Format strictly as JSON without extra markdown backticks or commentary outside the JSON.`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
+      const candidateModels = [
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash",
+      ];
+
+      let responseData: any = null;
+
+      for (const model of candidateModels) {
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                contents: [
                   {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: base64Data,
-                    },
-                  },
-                  {
-                    text: promptText,
+                    parts: [
+                      {
+                        inline_data: {
+                          mime_type: mimeType,
+                          data: base64Data,
+                        },
+                      },
+                      {
+                        text: promptText,
+                      },
+                    ],
                   },
                 ],
-              },
-            ],
-            generationConfig: {
-              response_mime_type: "application/json",
-              temperature: 0.2,
+                generationConfig: {
+                  response_mime_type: "application/json",
+                  temperature: 0.2,
+                },
+              }),
             },
-          }),
-        },
-      );
+          );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error(`Gemini API returned status ${response.status}: ${errorText}`);
-        return this.fallbackAnalysis(params.imageBuffer);
+          if (response.ok) {
+            responseData = await response.json();
+            this.logger.log(
+              `Vision analysis completed successfully with model: ${model}`,
+            );
+            break;
+          } else {
+            const errorText = await response.text();
+            this.logger.warn(
+              `Gemini model ${model} returned status ${response.status}: ${errorText}`,
+            );
+          }
+        } catch (fetchErr) {
+          this.logger.warn(
+            `Fetch error with Gemini model ${model}: ${(fetchErr as Error).message}`,
+          );
+        }
       }
 
-      const responseData = (await response.json()) as any;
+      if (!responseData) {
+        this.logger.error(
+          "All Gemini vision models failed. Falling back to deterministic analysis.",
+        );
+        return this.fallbackAnalysis(params.imageBuffer);
+      }
       const textOutput = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!textOutput) {
@@ -190,14 +220,18 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
         defaultArea: string,
         defaultExplanation: string,
       ): CosmeticObservationDetail => {
-        const score = typeof obs?.score === "number" ? Math.min(100, Math.max(0, obs.score)) : 50;
+        const score =
+          typeof obs?.score === "number" ? Math.min(100, Math.max(0, obs.score)) : 50;
         return {
           score,
           level: typeof obs?.level === "string" ? obs.level : "Moderate",
-          visibleArea: typeof obs?.visibleArea === "string" ? obs.visibleArea : defaultArea,
+          visibleArea:
+            typeof obs?.visibleArea === "string" ? obs.visibleArea : defaultArea,
           confidence: typeof obs?.confidence === "number" ? obs.confidence : 0.9,
-          explanation: typeof obs?.explanation === "string" ? obs.explanation : defaultExplanation,
-          uncertaintyNote: typeof obs?.uncertaintyNote === "string" ? obs.uncertaintyNote : undefined,
+          explanation:
+            typeof obs?.explanation === "string" ? obs.explanation : defaultExplanation,
+          uncertaintyNote:
+            typeof obs?.uncertaintyNote === "string" ? obs.uncertaintyNote : undefined,
         };
       };
 
@@ -277,7 +311,8 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
     const seed = parseInt(hash.slice(0, 8), 16);
 
     const skinTypes: SkinType[] = ["dry", "oily", "combination", "normal", "sensitive"];
-    const detectedSkinType: SkinType = skinTypes[seed % skinTypes.length] || "combination";
+    const detectedSkinType: SkinType =
+      skinTypes[seed % skinTypes.length] || "combination";
 
     const hydraScore = 38 + (seed % 35);
     const poresScore = 40 + ((seed >> 2) % 30);
@@ -312,7 +347,8 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
           hydraScore < 50
             ? "Fine surface tightness and slight dullness indicate water evaporation under indoor air conditioning."
             : "Moisture levels appear well maintained across the cutaneous surface.",
-        uncertaintyNote: "Surface appearance may vary based on recent moisturiser application.",
+        uncertaintyNote:
+          "Surface appearance may vary based on recent moisturiser application.",
       },
       visiblePores: {
         score: poresScore,
@@ -326,7 +362,8 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
       },
       rednessAppearance: {
         score: rednessScore,
-        level: rednessScore > 55 ? "Noticeable" : rednessScore > 35 ? "Mild Flushing" : "Calm",
+        level:
+          rednessScore > 55 ? "Noticeable" : rednessScore > 35 ? "Mild Flushing" : "Calm",
         visibleArea: "Malar cheeks & nasal wings",
         confidence: 0.91,
         explanation:
@@ -336,7 +373,12 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
       },
       pigmentationAppearance: {
         score: spotsScore,
-        level: spotsScore > 50 ? "Localized Spots" : spotsScore > 30 ? "Mild Variations" : "Even",
+        level:
+          spotsScore > 50
+            ? "Localized Spots"
+            : spotsScore > 30
+              ? "Mild Variations"
+              : "Even",
         visibleArea: "High cheekbones & temple periphery",
         confidence: 0.89,
         explanation:
@@ -346,7 +388,12 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
       },
       fineLinesAppearance: {
         score: fineLinesScore,
-        level: fineLinesScore > 55 ? "Marked" : fineLinesScore > 35 ? "Early Expressions" : "Smooth",
+        level:
+          fineLinesScore > 55
+            ? "Marked"
+            : fineLinesScore > 35
+              ? "Early Expressions"
+              : "Smooth",
         visibleArea: "Periorbital & forehead",
         confidence: 0.93,
         explanation:
@@ -366,7 +413,12 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
       },
       radianceAppearance: {
         score: radianceScore,
-        level: radianceScore > 60 ? "Luminous" : radianceScore > 40 ? "Balanced" : "Dull / Fatigued",
+        level:
+          radianceScore > 60
+            ? "Luminous"
+            : radianceScore > 40
+              ? "Balanced"
+              : "Dull / Fatigued",
         visibleArea: "Overall complexion",
         confidence: 0.95,
         explanation:
@@ -376,7 +428,12 @@ Format strictly as JSON without extra markdown backticks or commentary outside t
       },
       imperfectionsAppearance: {
         score: imperfectionsScore,
-        level: imperfectionsScore > 50 ? "Active Spots" : imperfectionsScore > 25 ? "Minimal" : "Clear",
+        level:
+          imperfectionsScore > 50
+            ? "Active Spots"
+            : imperfectionsScore > 25
+              ? "Minimal"
+              : "Clear",
         visibleArea: "Jawline & chin",
         confidence: 0.9,
         explanation:

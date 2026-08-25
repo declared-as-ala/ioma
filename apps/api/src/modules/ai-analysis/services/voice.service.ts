@@ -57,12 +57,12 @@ export class VoiceService implements VoiceProvider {
       this.logger.log(`Synthesizing speech via ElevenLabs (${params.locale})...`);
 
       // Configurable female voice IDs:
-      // EN default: Sarah (EXAVITQu4vr4xnSDxMaL) or Rachel (21m00Tcm4TlvDq8ikWAM)
-      // AR default: ElevenLabs Arabic female voice / multilingual model
+      // EN default: Sarah (EXAVITQu4vr4xnSDxMaL)
+      // AR default: Sarah (EXAVITQu4vr4xnSDxMaL) with eleven_multilingual_v2
       const defaultVoiceEn =
         this.configService.get<string>("AI_VOICE_EN_ID") || "EXAVITQu4vr4xnSDxMaL";
       const defaultVoiceAr =
-        this.configService.get<string>("AI_VOICE_AR_ID") || "21m00Tcm4TlvDq8ikWAM";
+        this.configService.get<string>("AI_VOICE_AR_ID") || "EXAVITQu4vr4xnSDxMaL";
 
       const voiceId =
         params.voiceId || (params.locale === "ar" ? defaultVoiceAr : defaultVoiceEn);
