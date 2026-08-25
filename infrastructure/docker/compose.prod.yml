@@ -8,7 +8,10 @@ services:
     container_name: ioma-prod-web
     restart: always
     env_file:
-      - ../../.env.prod
+      - path: ../../.env
+        required: false
+      - path: ../../.env.prod
+        required: false
     environment:
       NODE_ENV: production
       INTERNAL_API_URL: http://api:4000
@@ -25,7 +28,10 @@ services:
     container_name: ioma-prod-api
     restart: always
     env_file:
-      - ../../.env.prod
+      - path: ../../.env
+        required: false
+      - path: ../../.env.prod
+        required: false
     environment:
       NODE_ENV: production
       MONGO_URI: mongodb://mongo:27017/ioma
