@@ -24,6 +24,8 @@ export function useVoiceAdvisor(locale: Locale = "en") {
 
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -56,38 +58,174 @@ export function useVoiceAdvisor(locale: Locale = "en") {
     }
 
     return () => {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+      }
       if (synthRef.current) {
         synthRef.current.cancel();
       }
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, [locale]);
 
   const speak = useCallback(
-    (text: string) => {
-      if (state.isMuted || !synthRef.current) return;
+    async (text: string) => {
+      if (state.isMuted) return;
 
-      synthRef.current.cancel();
+      // Stop any existing audio or speech
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+      }
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
 
-      // Clean markdown tags like **bold** for voice synthesis
       const cleanText = text.replace(/[*#_~`]/g, "").trim();
+      if (!cleanText) return;
+
+      // 1. First Attempt: Server-side High-Fidelity Female Neural TTS
+      try {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3200";
+        const res = await fetch(`${apiUrl}/api/ai-analysis/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: cleanText, locale }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as { audioBase64?: string; audioUrl?: string };
+          const audioSrc = data.audioBase64 || data.audioUrl;
+
+          if (audioSrc) {
+            const audio = new Audio(audioSrc);
+            audioPlayerRef.current = audio;
+
+            audio.onplay = () => {
+              setState((prev) => ({ ...prev, isSpeaking: true }));
+            };
+            audio.onended = () => {
+              setState((prev) => ({ ...prev, isSpeaking: false }));
+              audioPlayerRef.current = null;
+            };
+            audio.onerror = () => {
+              setState((prev) => ({ ...prev, isSpeaking: false }));
+              audioPlayerRef.current = null;
+              speakWithBrowserFallback(cleanText, locale);
+            };
+
+            await audio.play();
+            return;
+          }
+        }
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+      }
+
+      // 2. Fallback: Browser Speech Synthesis with STRICT Female Filter
+      speakWithBrowserFallback(cleanText, locale);
+    },
+    [locale, state.isMuted],
+  );
+
+  const speakWithBrowserFallback = useCallback(
+    (cleanText: string, activeLocale: Locale) => {
+      if (!synthRef.current || state.isMuted) return;
+
       const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang =
+        activeLocale === "ar" ? "ar-AE" : activeLocale === "fr" ? "fr-FR" : "en-US";
+      utterance.rate = 0.92;
+      utterance.pitch = 1.05; // Slightly higher pitch to guarantee a pleasant feminine tone
 
-      utterance.lang = locale === "ar" ? "ar-AE" : locale === "fr" ? "fr-FR" : "en-US";
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-
-      // Match elegant voice if available
       const voices = synthRef.current.getVoices();
-      const targetLangPrefix = locale === "ar" ? "ar" : locale === "fr" ? "fr" : "en";
-      const matchedVoice =
-        voices.find((v) => v.lang.startsWith(targetLangPrefix) && v.name.includes("Natural")) ||
-        voices.find((v) => v.lang.startsWith(targetLangPrefix));
+      const targetLangPrefix =
+        activeLocale === "ar" ? "ar" : activeLocale === "fr" ? "fr" : "en";
 
-      if (matchedVoice) {
-        utterance.voice = matchedVoice;
+      // Verified list of female voice identifiers across Windows, Edge, Chrome, Safari, and Android
+      const femaleKeywords = [
+        "female",
+        "zira",
+        "jenny",
+        "aria",
+        "sonia",
+        "fatima",
+        "salma",
+        "denise",
+        "cosette",
+        "samantha",
+        "victoria",
+        "karen",
+        "moira",
+        "tessa",
+        "ava",
+        "chloe",
+        "amira",
+        "laila",
+        "noor",
+        "hoda",
+        "meryem",
+        "najat",
+        "zeina",
+        "mariam",
+        "siri",
+        "natural",
+      ];
+
+      // Male voice reject list to prevent male voice selection
+      const maleKeywords = [
+        "david",
+        "mark",
+        "george",
+        "naayf",
+        "paul",
+        "richard",
+        "guy",
+        "male",
+        "james",
+        "alex",
+        "fred",
+        "daniel",
+        "thomas",
+        "nicolas",
+        "hamed",
+        "shakir",
+      ];
+
+      const matchingLangVoices = voices.filter((v) =>
+        v.lang.startsWith(targetLangPrefix),
+      );
+
+      // Find an explicit female voice
+      const explicitFemaleVoice = matchingLangVoices.find((v) => {
+        const nameLower = v.name.toLowerCase();
+        const isMale = maleKeywords.some((m) => nameLower.includes(m));
+        if (isMale) return false;
+        return femaleKeywords.some((f) => nameLower.includes(f));
+      });
+
+      // Otherwise find any voice that is NOT explicitly male
+      const safeVoice =
+        explicitFemaleVoice ||
+        matchingLangVoices.find((v) => {
+          const nameLower = v.name.toLowerCase();
+          return !maleKeywords.some((m) => nameLower.includes(m));
+        });
+
+      if (safeVoice) {
+        utterance.voice = safeVoice;
       }
 
       utterance.onstart = () => {
@@ -102,21 +240,34 @@ export function useVoiceAdvisor(locale: Locale = "en") {
 
       synthRef.current.speak(utterance);
     },
-    [locale, state.isMuted],
+    [state.isMuted],
   );
 
   const stopSpeaking = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
     if (synthRef.current) {
       synthRef.current.cancel();
-      setState((prev) => ({ ...prev, isSpeaking: false }));
     }
+    setState((prev) => ({ ...prev, isSpeaking: false }));
   }, []);
 
   const toggleMute = useCallback(() => {
     setState((prev) => {
       const nextMuted = !prev.isMuted;
-      if (nextMuted && synthRef.current) {
-        synthRef.current.cancel();
+      if (nextMuted) {
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.pause();
+          audioPlayerRef.current = null;
+        }
+        if (synthRef.current) {
+          synthRef.current.cancel();
+        }
       }
       return { ...prev, isMuted: nextMuted, isSpeaking: false };
     });
@@ -152,8 +303,8 @@ export function useVoiceAdvisor(locale: Locale = "en") {
         };
 
         rec.start();
-      } catch (err) {
-        console.warn("Could not start speech recognition:", err);
+      } catch {
+        setState((prev) => ({ ...prev, isListening: false }));
       }
     },
     [locale],

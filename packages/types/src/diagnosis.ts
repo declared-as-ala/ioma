@@ -180,14 +180,36 @@ export type AvatarSpeechTopic =
   | "recommendations"
   | "general";
 
+export interface VoiceSynthesisResult {
+  audioBase64?: string;
+  audioUrl?: string;
+  format: "mp3" | "wav" | "ogg";
+  durationSeconds: number;
+  provider: "elevenlabs" | "azure" | "openai" | "fallback";
+}
+
+export interface AvatarSessionData {
+  sessionId: string;
+  streamUrl?: string;
+  webrtcOffer?: string;
+  webrtcIceServers?: Array<{
+    urls: string | string[];
+    username?: string;
+    credential?: string;
+  }>;
+  provider: "heygen" | "did" | "tavus" | "studio";
+  status: "connected" | "connecting" | "idle" | "failed";
+}
+
 export interface TalkingAvatarResult {
   jobId?: string;
+  sessionId?: string;
   videoUrl?: string;
   audioUrl?: string;
   posterUrl: string;
   durationSeconds: number;
   subtitles: AvatarSpeechSubtitle[];
-  provider: "heygen" | "did" | "tavus" | "browser_synth";
+  provider: "heygen" | "did" | "tavus" | "browser_synth" | "studio";
   status: "ready" | "processing" | "failed";
 }
 

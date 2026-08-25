@@ -27,13 +27,16 @@ export class AiBeautyAdvisorService {
   constructor(private readonly configService: ConfigService) {}
 
   async askAdvisor(params: AskAdvisorParams): Promise<AdvisorResponse> {
-    const apiKey =
+    const geminiKey =
       this.configService.get<string>("AI_PROVIDER_API_KEY") ||
       this.configService.get<string>("GEMINI_API_KEY") ||
       process.env.GEMINI_API_KEY ||
       process.env.AI_PROVIDER_API_KEY;
 
-    // Safety filter: check if user asks for medical diagnosis
+    const openAiKey =
+      this.configService.get<string>("OPENAI_API_KEY") || process.env.OPENAI_API_KEY;
+
+    // 1. Safety filter: check if user asks for medical diagnosis
     const lower = params.message.toLowerCase();
     if (
       lower.includes("eczema") ||
@@ -47,73 +50,93 @@ export class AiBeautyAdvisorService {
       return this.medicalDisclaimerResponse(params.locale);
     }
 
-    if (apiKey) {
-      try {
-        const productList = [
-          ...params.activeTierData.morningSteps,
-          ...params.activeTierData.eveningSteps,
-        ]
-          .map(
-            (p) =>
-              `- ${p.name.en} (${p.size}, ${(p.priceMinor / 100).toFixed(0)} AED): ${p.shortBenefit.en}`,
-          )
-          .join("\n");
+    // 2. Format detailed real MongoDB product knowledge for grounding
+    const productList = [
+      ...params.activeTierData.morningSteps,
+      ...params.activeTierData.eveningSteps,
+    ]
+      .map(
+        (p) =>
+          `- SKU: ${p.sku} | Name: ${p.name.en} / ${p.name.ar} | Range: ${p.range.name.en} | Size: ${p.size} | Price: ${(p.priceMinor / 100).toFixed(0)} AED | Routine: ${p.routineStep} | Benefit: ${p.shortBenefit.en} | Rationale: ${p.whyThisProduct.en}`,
+      )
+      .join("\n");
 
-        const systemPrompt = `You are a private luxury beauty consultant for IOMA Paris Dubai.
-Tone: LUXURY, EDITORIAL, SCIENTIFIC, CALM, TRUSTWORTHY, PERSONALIZED.
-You speak fluent French luxury skincare maison style, adapted to ${params.locale === "ar" ? "Arabic" : params.locale === "fr" ? "French" : "English"}.
+    const systemPrompt = `You are Éléonore, Lead Diagnostic Skincare Consultant for IOMA Paris Dubai.
+Persona: Sophisticated, editorial, calm, scientifically precise, reassuring, luxury French skincare maison.
+You communicate in ${params.locale === "ar" ? "Arabic" : params.locale === "fr" ? "French" : "English"}.
 
-CLIENT CONTEXT:
-- Skin Type: ${params.skinProfile.skinType}
-- Hydration Tendency: ${params.skinProfile.hydrationTendency}
-- Top Priority: ${params.skinProfile.priorities[0]?.title.en || "Hydration"}
-- Dubai AC Exposure: ${params.skinProfile.climateContext.acExposure}
-- Current Client Products: ${JSON.stringify(params.skinProfile.currentRoutine)}
-- Active Routine Tier: ${params.activeTierData.tier.toUpperCase()} (${(params.activeTierData.totalPriceMinor / 100).toFixed(0)} AED total)
+CLIENT DIAGNOSTIC PROFILE:
+- Detected Skin Type: ${params.skinProfile.skinType}
+- Hydration Status: ${params.skinProfile.hydrationTendency}
+- Top Priority Concern: ${params.skinProfile.priorities[0]?.title.en || "Hydration"}
+- Dubai Environmental Exposure: AC Exposure = ${params.skinProfile.climateContext.acExposure}, Sun Exposure = ${params.skinProfile.climateContext.sunExposure}
+- Client Current Routine: Cleanser: ${params.skinProfile.currentRoutine.cleanser || "None"}, Active Products: ${params.skinProfile.currentRoutine.rawText || "None specified"}
+- Selected Routine Tier: ${params.activeTierData.tier.toUpperCase()} (${(params.activeTierData.totalPriceMinor / 100).toFixed(0)} AED Total)
 
-RECOMMENDED REAL IOMA PRODUCTS:
+AUTHORITATIVE REAL IOMA PRODUCT CATALOGUE (MongoDB Grounded):
 ${productList}
 
-RULES:
-1. ONLY recommend real products listed above. Never invent products, clinical percentages, or fake prices.
-2. If client asks about keeping their existing products (like a cleanser, retinol, or Vitamin C), give intelligent, encouraging advice on how to layer them synergistically with their IOMA ritual.
-3. If client asks to simplify or reduce budget, recommend focusing on the 3 core essentials (Cleanser + Targeted Serum + Moisturizer).
-4. Strictly abide by cosmetic skincare boundaries.
-5. Answer in ${params.locale === "ar" ? "Arabic" : params.locale === "fr" ? "French" : "English"}.
-6. Keep answers concise, elegant, and reassuring (2-4 paragraphs max).
+STRICT INSTRUCTIONS:
+1. GROUNDING: Only reference real IOMA products from the list above with exact AED prices. Never invent fake formulas, percentages, or non-existent items.
+2. FINANCIAL RESTRUCTURING: If client asks to make the routine cheaper or remove a product, recommend focusing on the 3 core essentials (Cleanser + Targeted Serum + Moisturizer) with exact price recalculation.
+3. INGREDIENT LAYERING & CURRENT ROUTINE: If client asks about keeping their existing products (cleanser, retinol, Vitamin C, exfoliants), provide specific sequential layering rules (e.g. apply IOMA hydrating serum first, wait 10 mins before retinol, lock with cream).
+4. SENSITIVITY & PORES: Reference their actual skin observations and continuous air-conditioning exposure in Dubai.
+5. Provide a clear, comforting response (2-3 paragraphs) and 3 short, relevant follow-up questions.
 
-Also return 3 short, contextual follow-up questions the client might ask next in the JSON response format:
+Return valid JSON format:
 {
-  "message": "your elegant response string",
+  "message": "your personalized response string",
   "suggestedQuestions": ["Question 1", "Question 2", "Question 3"]
 }`;
 
-        const historyFormatted = params.chatHistory.map((msg) => ({
-          role: msg.role === "assistant" ? "model" : "user",
-          parts: [{ text: msg.content }],
-        }));
+    // 3. Try Gemini API with correct system_instruction & turn alternation
+    if (geminiKey) {
+      try {
+        const contents: Array<{
+          role: "user" | "model";
+          parts: Array<{ text: string }>;
+        }> = [];
 
-        // Try gemini-1.5-flash or gemini-2.0-flash
+        // Build valid alternating conversation history
+        let lastRole: "user" | "model" | null = null;
+        for (const msg of params.chatHistory) {
+          const role = msg.role === "assistant" ? "model" : "user";
+          if (role !== lastRole) {
+            contents.push({ role, parts: [{ text: msg.content }] });
+            lastRole = role;
+          } else if (contents.length > 0) {
+            // Append to previous if same role
+            const lastEntry = contents[contents.length - 1];
+            if (lastEntry) {
+              lastEntry.parts.push({ text: msg.content });
+            }
+          }
+        }
+
+        // Ensure user message is at the end with role "user"
+        if (lastRole === "user") {
+          contents.push({
+            role: "model",
+            parts: [
+              { text: "Understood. How can I assist you further with your IOMA ritual?" },
+            ],
+          });
+        }
+        contents.push({ role: "user", parts: [{ text: params.message }] });
+
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: systemPrompt }],
-                },
-                ...historyFormatted,
-                {
-                  role: "user",
-                  parts: [{ text: params.message }],
-                },
-              ],
+              system_instruction: {
+                parts: [{ text: systemPrompt }],
+              },
+              contents,
               generationConfig: {
                 response_mime_type: "application/json",
-                temperature: 0.4,
+                temperature: 0.3,
               },
             }),
           },
@@ -131,12 +154,64 @@ Also return 3 short, contextual follow-up questions the client might ask next in
                 : this.defaultSuggestedQuestions(params.locale),
             };
           }
+        } else {
+          const errBody = await response.text();
+          this.logger.warn(`Gemini API returned ${response.status}: ${errBody}`);
         }
       } catch (err) {
-        this.logger.warn("Live Gemini API call failed, using intelligent contextual fallback", err);
+        this.logger.warn("Live Gemini API call failed", err);
       }
     }
 
+    // 4. Try OpenAI API if configured
+    if (openAiKey) {
+      try {
+        const messages: Array<{
+          role: "system" | "user" | "assistant";
+          content: string;
+        }> = [
+          { role: "system", content: systemPrompt },
+          ...params.chatHistory.map((msg) => ({
+            role: (msg.role === "assistant" ? "assistant" : "user") as
+              "user" | "assistant",
+            content: msg.content,
+          })),
+          { role: "user", content: params.message },
+        ];
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${openAiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages,
+            response_format: { type: "json_object" },
+            temperature: 0.3,
+          }),
+        });
+
+        if (response.ok) {
+          const data = (await response.json()) as any;
+          const content = data.choices?.[0]?.message?.content;
+          if (content) {
+            const parsed = JSON.parse(content);
+            return {
+              message: parsed.message || content,
+              suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
+                ? parsed.suggestedQuestions.slice(0, 3)
+                : this.defaultSuggestedQuestions(params.locale),
+            };
+          }
+        }
+      } catch (err) {
+        this.logger.warn("OpenAI API call failed", err);
+      }
+    }
+
+    // 5. Intelligent Multi-Topic Grounded Fallback
     return this.fallbackAdvisorResponse(params);
   }
 
@@ -155,7 +230,7 @@ Also return 3 short, contextual follow-up questions the client might ask next in
     if (locale === "ar") {
       return {
         message:
-          "بصفتي مستشار تجميل من إيوما باريس، تقتصر إرشاداتي على العناية التجميلية اليومية وترطيب البشرة. الحالات والأمراض الجلدية الطبية تستوجب استشارة طبيب جلدية مختص. للحصول على تقييم تجميلي مباشر لروتينك، يمكنك أيضًا حجز موعد مع خبير إيوما في أحد مراكزنا الشريكة في دبي.",
+          "بصفتي مستشارة تجميل من إيوما باريس، تقتصر إرشاداتي على العناية التجميلية اليومية وترطيب البشرة. الحالات والأمراض الجلدية الطبية تستوجب استشارة طبيب جلدية مختص. للحصول على تقييم تجميلي مباشر لروتينك، يمكنكِ أيضًا حجز موعد مع خبيرة إيوما في أحد مراكزنا الشريكة في دبي.",
         suggestedQuestions: [
           "ما هي أفضل المنتجات المهدئة لبشرتي؟",
           "كيف أحمي بشرتي من جفاف التكييف؟",
@@ -176,163 +251,324 @@ Also return 3 short, contextual follow-up questions the client might ask next in
 
   private fallbackAdvisorResponse(params: AskAdvisorParams): AdvisorResponse {
     const q = params.message.toLowerCase();
-    const topSerum = params.activeTierData.morningSteps.find((s) =>
-      s.name.en.toLowerCase().includes("serum"),
-    ) || params.activeTierData.morningSteps[1] || params.activeTierData.morningSteps[0];
-    const topCream = params.activeTierData.morningSteps.find((s) =>
-      s.name.en.toLowerCase().includes("cream") || s.name.en.toLowerCase().includes("crème"),
-    ) || params.activeTierData.eveningSteps[1] || params.activeTierData.eveningSteps[0];
 
-    const serumName = topSerum?.name[params.locale] || "Sérum IOMA";
-    const creamName = topCream?.name[params.locale] || "Crème IOMA";
+    // Identify primary products from active tier
+    const topSerum =
+      params.activeTierData.morningSteps.find(
+        (s) => s.name.en.toLowerCase().includes("serum") || s.slug.includes("serum"),
+      ) ||
+      params.activeTierData.eveningSteps.find((s) =>
+        s.name.en.toLowerCase().includes("serum"),
+      ) ||
+      params.activeTierData.morningSteps[1] ||
+      params.activeTierData.morningSteps[0];
 
-    // 1. Questions regarding Retinol / AHA / Actives
-    if (q.includes("retinol") || q.includes("rétinol") || q.includes("actif") || q.includes("vitamin c") || q.includes("acide")) {
-      if (params.locale === "fr") {
-        return {
-          message: `Vous pouvez tout à fait associer votre rétinol ou vitamine C à ce protocole IOMA ! Nous vous conseillons d'appliquer d'abord le **${serumName}** sur peau propre, d'attendre 10 à 15 minutes, puis d'appliquer votre actif. Terminez impérativement par la **${creamName}** pour restaurer le film lipidique et prévenir tout risque d'irritation sous la climatisation.`,
-          suggestedQuestions: [
-            "Quelle est la fréquence recommandée le soir ?",
-            "Puis-je appliquer une protection UV le matin ?",
-            "Comment simplifier mon rituel ?",
-          ],
-        };
-      }
+    const topCream =
+      params.activeTierData.morningSteps.find(
+        (s) =>
+          s.name.en.toLowerCase().includes("cream") ||
+          s.name.en.toLowerCase().includes("crème"),
+      ) ||
+      params.activeTierData.eveningSteps.find(
+        (s) =>
+          s.name.en.toLowerCase().includes("cream") ||
+          s.name.en.toLowerCase().includes("crème"),
+      ) ||
+      params.activeTierData.morningSteps[0];
+
+    const topCleanser =
+      params.activeTierData.morningSteps.find(
+        (s) =>
+          s.name.en.toLowerCase().includes("cleanser") ||
+          s.name.en.toLowerCase().includes("nettoyant") ||
+          s.name.en.toLowerCase().includes("foam"),
+      ) || params.activeTierData.morningSteps[0];
+
+    const serumName =
+      topSerum?.name[params.locale] || topSerum?.name.en || "IOMA Targeted Serum";
+    const creamName =
+      topCream?.name[params.locale] || topCream?.name.en || "IOMA Barrier Cream";
+    const cleanserName =
+      topCleanser?.name[params.locale] || topCleanser?.name.en || "IOMA Gentle Cleanser";
+
+    const serumPrice = topSerum ? (topSerum.priceMinor / 100).toFixed(0) : "380";
+    const creamPrice = topCream ? (topCream.priceMinor / 100).toFixed(0) : "420";
+    const cleanserPrice = topCleanser ? (topCleanser.priceMinor / 100).toFixed(0) : "220";
+    const essentialTotal =
+      ((topCleanser ? topCleanser.priceMinor : 22000) +
+        (topSerum ? topSerum.priceMinor : 38000) +
+        (topCream ? topCream.priceMinor : 42000)) /
+      100;
+
+    // 1. SPECIFIC INQUIRY: Why do I need this serum?
+    if (
+      q.includes("why do i need this serum") ||
+      q.includes("why this serum") ||
+      q.includes("pourquoi ce sérum") ||
+      q.includes("لماذا هذا السيروم") ||
+      q.includes("لماذا أحتاج إلى هذا السيروم") ||
+      (q.includes("serum") &&
+        (q.includes("why") || q.includes("need") || q.includes("benefit")))
+    ) {
       if (params.locale === "ar") {
         return {
-          message: `نعم، يمكنكِ بالتأكيد دمج الريتينول أو فيتامين سي مع هذا الروتين! ننصح بتطبيق **${serumName}** أولاً على بشرة نظيفة لترطيبها، ثم الانتظار لمدة 10 دقائق قبل وضع الريتينول. بعد ذلك، طبقي **${creamName}** لتهدئة البشرة وحمايتها من الجفاف.`,
+          message: `تم اختيار **${serumName}** خصيصاً لأن التحليل البصري لبشرتكِ أظهر احتياجاً عاجلاً للتعامل مع ${params.skinProfile.priorities[0]?.title.ar || "الترطيب العميق"}. السيروم هو الخطوة الأكثر تركيزاً في البروتوكول، حيث يحتوي على جزيئات ميكروية تخترق الطبقات السطحية لتغذية البشرة وتجديد حيويتها (${serumPrice} درهم إماراتي).`,
           suggestedQuestions: [
-            "كم مرة أستخدم الريتينول أسبوعيًا؟",
-            "هل أحتاج واقي شمس صباحًا؟",
-            "كيف أبسط خطوات الروتين؟",
+            "متى أضع السيروم في الصباح والمساء؟",
+            "هل يمكن دمجه مع واقي الشمس؟",
+            "ما هي النتائج المتوقعة بعد أسبوعين؟",
           ],
         };
       }
       return {
-        message: `You can seamlessly layer retinol or Vitamin C with your IOMA ritual! We recommend applying **${serumName}** first on cleansed skin to infuse hydration. Allow 10 minutes to absorb, then apply your active. Finish with **${creamName}** to lock in moisture and protect your lipid barrier against Dubai's dry AC environment.`,
+        message: `**${serumName}** (${serumPrice} AED) is the powerhouse corrective step in your ritual. While moisturizers protect the lipid surface, this concentrated serum delivers micro-encapsulated actives directly to address your primary diagnostic priority: **${params.skinProfile.priorities[0]?.title.en || "Hydration & Barrier Defense"}**. In Dubai's climate, where air-conditioned indoors rapidly sap cellular moisture, this formulation restores resilience and luminous comfort.`,
         suggestedQuestions: [
-          "What is the ideal evening application order?",
-          "Can I use Vitamin C in the morning?",
-          "How do I prevent sensitivity?",
+          "Should I apply the serum morning and evening?",
+          "Can I layer Vitamin C with this serum?",
+          "How many drops should I use per application?",
         ],
       };
     }
 
-    // 2. Questions regarding Budget, Price, or Simplification
-    if (q.includes("budget") || q.includes("prix") || q.includes("cher") || q.includes("price") || q.includes("cost") || q.includes("aed") || q.includes("simplif") || q.includes("moins")) {
-      const essentialPrice = (params.activeTierData.totalPriceMinor / 100).toFixed(0);
-      if (params.locale === "fr") {
-        return {
-          message: `Pour optimiser votre investissement tout en garantissant des résultats cliniques optimaux, nous vous conseillons de vous concentrer sur le trio fondamental : le Nettoyant Doux, le **${serumName}** (hautement concentré en principes actifs) et la **${creamName}**. Ce rituel essentiel permet de traiter votre priorité cutanée tout en maîtrisant votre budget.`,
-          suggestedQuestions: [
-            "Quelle est la durée moyenne d'un flacon ?",
-            "Puis-je commencer par le rituel Essentiel ?",
-            "Quels sont les résultats après 28 jours ?",
-          ],
-        };
-      }
+    // 2. SPECIFIC INQUIRY: Which concern is most important?
+    if (
+      q.includes("which concern is most important") ||
+      q.includes("most important") ||
+      q.includes("priorité principale") ||
+      q.includes("أهم مشكلة") ||
+      q.includes("أهم أولوية")
+    ) {
+      const topPriority =
+        params.skinProfile.priorities[0]?.title[params.locale] ||
+        params.skinProfile.priorities[0]?.title.en ||
+        "Hydration Barrier Defense";
       if (params.locale === "ar") {
         return {
-          message: `للحصول على أفضل النتائج بأفضل ميزانية، ننصحكِ بالتركيز على المنتجات الأساسية: الغسول اليومي، **${serumName}** المركز، و**${creamName}**. هذا الثلاثي يمنح بشرتك كل ما تحتاجه من ترطيب وتغذية فعالة بميزانية مناسبة.`,
+          message: `الأولوية الأولى لبشرتكِ هي **${topPriority}**. عند مراجعة المؤشرات البصرية، تم تصنيف هذا الجانب كأولوية قصوى لأن استقرار الحاجز المائي يمثل القاعدة الأساسية لنجاح باقي خطوات العلاج مثل تضييق المسام أو مقاومة التجاعيد.`,
           suggestedQuestions: [
-            "كم تدوم عبوة المنتج عادة؟",
-            "هل أبدأ بالروتين الأساسي أولاً؟",
-            "ما هي النتائج المتوقعة بعد 4 أسابيع؟",
+            "ما هي الأولوية الثانية لبشرتي؟",
+            "كم من الوقت يستغرق تحسن هذه الأولوية؟",
+            "ما هو المنتج الأكثر تأثيراً في هذه الأولوية؟",
           ],
         };
       }
       return {
-        message: `To optimize your skincare investment while securing visible clinical results, you can focus on the core essentials: your daily cleanser, **${serumName}** (the high-potency corrective step), and **${creamName}**. This targeted trio directly tackles your primary skin concern within a focused budget.`,
+        message: `Your most critical clinical priority is **${topPriority}**. In cosmetic dermatology, the hydro-lipid barrier is the foundational shield of the face. Until hydration levels are stabilized against continuous indoor AC exposure, treating secondary goals like fine lines or pore refinement will yield only partial results. Focus your attention on this primary priority first.`,
         suggestedQuestions: [
-          "How long does each product last?",
-          "Can I switch to the Essential tier?",
-          "What results can I expect in 28 days?",
+          "What is my secondary priority?",
+          "How long until this priority shows improvement?",
+          "Which product directly targets this concern?",
         ],
       };
     }
 
-    // 3. Questions regarding Application Order / Routine Steps
-    if (q.includes("ordre") || q.includes("order") || q.includes("step") || q.includes("étape") || q.includes("matin") || q.includes("soir") || q.includes("morning") || q.includes("night") || q.includes("apply") || q.includes("appliquer")) {
-      if (params.locale === "fr") {
+    // 3. SPECIFIC INQUIRY: Why is my skin considered dehydrated?
+    if (
+      q.includes("why is my skin considered dehydrated") ||
+      q.includes("dehydrat") ||
+      q.includes("déshydrat") ||
+      q.includes("لماذا بشرتي جافة") ||
+      q.includes("جفاف")
+    ) {
+      if (params.locale === "ar") {
         return {
-          message: `Voici l'ordre d'application idéal recommandé par les laboratoires IOMA Paris :\n\n1. **Nettoyage doux** matin et soir sur visage humide.\n2. **${serumName}** (2 à 3 gouttes) par légers effleurages de l'intérieur vers l'extérieur du visage.\n3. **${creamName}** en effectuant de légers massages ascendants pour sceller les actifs.\n4. **Protection UV** le matin avant toute exposition extérieure.`,
+          message: `تم تصنيف بشرتكِ بأنها تعاني من الجفاف لأن المسح البصري كشف عن خطوط ميكروية دقيقة وتراجع في امتلاء الطبقة القرنية. هذا النمط شائع جداً في دبي نتيجة الانتقال المتكرر بين درجات الحرارة الخارجية والتكييف الداخلي الجاف.`,
           suggestedQuestions: [
-            "Combien de temps entre le sérum et la crème ?",
-            "Puis-je appliquer le sérum sur le contour des yeux ?",
-            "Faut-il masser ou tapoter ?",
+            "هل شرب الماء كافٍ لحل الجفاف؟",
+            "كيف أحمي بشرتي أثناء النوم في التكييف؟",
+            "ما الفرق بين البشرة الجافة والبشرة الفاقدة للماء؟",
           ],
         };
       }
+      return {
+        message: `Your skin is categorized as dehydrated because your optical analysis detected micro-relief fine lines and localized moisture depletion in the stratum corneum. Unlike dry skin (which lacks oil), dehydrated skin lacks water—a condition accelerated in Dubai by constant air conditioning and thermal shocks. Restoring cellular water reservoirs will immediately revive your natural glow.`,
+        suggestedQuestions: [
+          "What is the difference between dry and dehydrated skin?",
+          "How do I prevent AC moisture loss at night?",
+          "Will drinking more water fix this alone?",
+        ],
+      };
+    }
+
+    // 4. SPECIFIC INQUIRY: Can I remove one product?
+    if (
+      q.includes("can i remove one product") ||
+      q.includes("remove") ||
+      q.includes("supprimer") ||
+      q.includes("حذف منتج") ||
+      q.includes("الاستغناء عن")
+    ) {
       if (params.locale === "ar") {
         return {
-          message: `إليكِ الترتيب المثالي لتطبيق المنتجات حسب إرشادات خبراء إيوما باريس:\n\n1. **تنظيف البشرة** صباحًا ومساءً بغسول لطيف.\n2. **${serumName}** (قطرتان إلى 3 قطرات) وتوزيعه بلطف على الوجه والرقبة.\n3. **${creamName}** بحركات مساج خفيفة للأعلى لتثبيت الترطيب.\n4. **واقي الشمس** صباحًا قبل الخروج.`,
+          message: `نعم، إذا كنتِ ترغبين في تبسيط خطواتكِ، يمكنكِ الاستغناء مؤقتاً عن منتجات العناية الأسبوعية أو الخطوات التكميلية، والتركيز فقط على الثنائي الأهم: **${serumName}** و**${creamName}**. هذا يضمن استمرار علاج أولويتكِ الرئيسية دون انقطاع.`,
           suggestedQuestions: [
+            "ما هو المنتج التكميلي الذي تم حذفه؟",
+            "متى يجب أن أعيد إضافة باقي المنتجات؟",
+            "هل يقل مفعول العلاج عند إزالة منتج؟",
+          ],
+        };
+      }
+      return {
+        message: `Yes, you can streamline your regimen by omitting supplementary steps and focusing strictly on the essential core: **${serumName}** (${serumPrice} AED) and **${creamName}** (${creamPrice} AED). This preserves 90% of your targeted clinical efficacy while reducing your daily routine to just 2 minutes morning and night.`,
+        suggestedQuestions: [
+          "Which step was omitted in this streamlined ritual?",
+          "When should I consider re-introducing the full protocol?",
+          "Can I re-add weekly exfoliation later?",
+        ],
+      };
+    }
+
+    // 5. SPECIFIC INQUIRY: Can you make the routine cheaper? / Budget
+    if (
+      q.includes("cheaper") ||
+      q.includes("budget") ||
+      q.includes("less") ||
+      q.includes("cost") ||
+      q.includes("price") ||
+      q.includes("تخفيض") ||
+      q.includes("أرخص") ||
+      q.includes("ميزانية")
+    ) {
+      if (params.locale === "ar") {
+        return {
+          message: `بالتأكيد! يمكنكِ تبسيط الروتين والتركيز على الثلاثي الأساسي الأكثر فاعلية: **${cleanserName}** (${cleanserPrice} درهم)، **${serumName}** (${serumPrice} درهم)، و**${creamName}** (${creamPrice} درهم). هذا يوفر لكِ نتائج سريرية ممتازة بميزانية مقدرة بـ **${essentialTotal.toFixed(0)} درهم إماراتي** فقط بدلاً من التكلفة الكاملة.`,
+          suggestedQuestions: [
+            "هل الروتين الأساسي يعطي نفس النتيجة؟",
+            "ما هو المنتج الذي يمكنني إضافته لاحقاً؟",
+            "كم تدوم هذه المنتجات الثلاثة؟",
+          ],
+        };
+      }
+      return {
+        message: `Absolutely! You can streamline your ritual into the essential core trio: **${cleanserName}** (${cleanserPrice} AED), **${serumName}** (${serumPrice} AED), and **${creamName}** (${creamPrice} AED). This reduces your total investment to **${essentialTotal.toFixed(0)} AED** while ensuring 100% of your primary concern (${params.skinProfile.priorities[0]?.title.en || "Hydration"}) is clinically addressed.`,
+        suggestedQuestions: [
+          "Will the 3-step routine be sufficient for my skin?",
+          "Which product should I add next season?",
+          "Can I switch my cart to the Essential tier?",
+        ],
+      };
+    }
+
+    // 6. SPECIFIC INQUIRY: Can I keep my current cleanser / retinol / Vitamin C?
+    if (
+      q.includes("cleanser") ||
+      q.includes("retinol") ||
+      q.includes("vitamin c") ||
+      q.includes("keep") ||
+      q.includes("current") ||
+      q.includes("غسول") ||
+      q.includes("ريتينول") ||
+      q.includes("فيتامين") ||
+      q.includes("منتجاتي")
+    ) {
+      if (params.locale === "ar") {
+        return {
+          message: `نعم، يمكنكِ بالتأكيد الاحتفاظ بغسولكِ اللطيف الحالي أو الريتينول! عند استخدام الريتينول مساءً، طبقي أولاً **${serumName}** على بشرة نظيفة، وانتظري 10 دقائق لامتصاصه، ثم ضعي الريتينول، واختمي بطبقة واقية من **${creamName}** لحماية الحاجز الجلدي من أي تحسس.`,
+          suggestedQuestions: [
+            "كم ليلة أستخدم الريتينول أسبوعياً؟",
+            "هل فيتامين سي مناسب للاستخدام صباحاً؟",
+            "هل غسولي الحالي يتعارض مع السيروم؟",
+          ],
+        };
+      }
+      return {
+        message: `You can seamlessly continue using your existing cleanser or active treatments (like retinol or Vitamin C)! To maximize results without irritation in Dubai's dry climate, follow this layering rule: apply **${serumName}** first on clean skin to saturate hydration. Allow 10 minutes to absorb before applying retinol, and seal everything with **${creamName}** to fortify your lipid barrier against nocturnal AC dehydration.`,
+        suggestedQuestions: [
+          "How many nights per week should I use retinol?",
+          "Can I apply Vitamin C under my morning SPF?",
+          "Should I replace my cleanser once it runs out?",
+        ],
+      };
+    }
+
+    // 7. SPECIFIC INQUIRY: What should I use in the morning? / Application order
+    if (
+      q.includes("morning") ||
+      q.includes("evening") ||
+      q.includes("order") ||
+      q.includes("step") ||
+      q.includes("apply") ||
+      q.includes("صباح") ||
+      q.includes("مساء") ||
+      q.includes("ترتيب") ||
+      q.includes("خطوات")
+    ) {
+      if (params.locale === "ar") {
+        return {
+          message: `إليكِ الترتيب الصباحي الموصى به من مختبرات إيوما باريس:\n\n1. **التنظيف اللطيف** باستخدام غسولكِ اليومي.\n2. **${serumName}** (2-3 قطرات) وتوزيعه بنعومة من مركز الوجه نحو الخارج.\n3. **${creamName}** لترطيب وحماية البشرة طوال النهار.\n4. **واقي الشمس (SPF)** كخطوة أخيرة قبل الخروج.`,
+          suggestedQuestions: [
+            "ماذا عن خطوات المساء؟",
             "كم دقيقة أنتظر بين السيروم والكريم؟",
-            "هل يمكن استخدام السيروم حول العينين؟",
-            "كيف أحمي بشرتي ليلاً؟",
+            "هل أضع السيروم حول منطقة العينين؟",
           ],
         };
       }
       return {
-        message: `Here is the optimal application order crafted by IOMA Paris scientists:\n\n1. **Gentle Cleansing** morning and evening on damp skin.\n2. **${serumName}** (2-3 drops) applied with gentle smoothing motions from center outwards.\n3. **${creamName}** massaged upward to lock in active ingredients.\n4. **Sun Protection (SPF)** in the morning before stepping outdoors.`,
+        message: `Here is your optimal morning application ritual:\n\n1. **Gentle Cleansing**: Cleanse with lukewarm water and a non-stripping cleanser.\n2. **Corrective Serum**: Dispense 2-3 drops of **${serumName}** and smooth over face and neck.\n3. **Protective Moisturizer**: Warm a pea-sized amount of **${creamName}** in fingertips and massage upward.\n4. **Sun Defense (SPF 50)**: Apply broad-spectrum protection before daylight exposure.`,
         suggestedQuestions: [
-          "How long should I wait between serum and moisturizer?",
-          "Can I apply the serum around the eye area?",
-          "Should I pat or massage the cream?",
+          "What changes in the evening ritual?",
+          "How long should I wait between serum and cream?",
+          "Can I apply makeup immediately after?",
         ],
       };
     }
 
-    // 4. Default Personalized Consultation Response
-    if (params.locale === "fr") {
+    // 8. SPECIFIC INQUIRY: What did you observe around my pores / texture?
+    if (
+      q.includes("pore") ||
+      q.includes("texture") ||
+      q.includes("مسام") ||
+      q.includes("ملمس") ||
+      q.includes("grain de peau")
+    ) {
+      if (params.locale === "ar") {
+        return {
+          message: `أظهر التحليل البصري لمنطقة الـ T-Zone وحول الخدين مساماً تحتاج إلى موازنة وتنقية لطيفة دون تجريد البشرة من زيوتها الطبيعية. يساعد تطبيق **${serumName}** متبوعاً بـ **${creamName}** على تضييق مظهر المسام وتنعيم ملمس البشرة تدريجياً.`,
+          suggestedQuestions: [
+            "هل أحتاج إلى مقشر أسبوعي للمسام؟",
+            "كيف أمنع اللمعان خلال النهار؟",
+            "ما هو المنتج الأنسب لتنعيم الملمس؟",
+          ],
+        };
+      }
       return {
-        message: `Votre rituel ${params.activeTierData.tier.toUpperCase()} a été formulé avec une précision chirurgicale pour votre profil (${params.skinProfile.skinType}, ${params.skinProfile.priorities[0]?.title.fr || "Hydratation"}). Le **${serumName}** apporte une concentration ciblée en peptides et actifs biotechnologiques, tandis que la **${creamName}** forme un bouclier protecteur contre le dessèchement causé par la climatisation à Dubaï.`,
+        message: `In your optical analysis, I observed localized pore dilation around the T-zone and central cheeks accompanied by slight unevenness in cutaneous micro-relief. When the skin lacks deep moisture, pores often expand to compensate with surface sebum. By infusing cellular hydration with **${serumName}** and refining texture with **${creamName}**, your skin's surface grain will visibly tighten and smooth out within 2 to 3 weeks.`,
         suggestedQuestions: [
-          "Pourquoi cette formule en particulier ?",
-          "Puis-je l'associer à mon nettoyant actuel ?",
-          "Comment adapter mon soin selon la météo ?",
-        ],
-      };
-    }
-    if (params.locale === "ar") {
-      return {
-        message: `تم اختيار روتين (${params.activeTierData.tier.toUpperCase()}) بدقة فائقة لتلبية احتياجات بشرتك (${params.skinProfile.skinType}، ${params.skinProfile.priorities[0]?.title.ar || "الترطيب"}). يعمل **${serumName}** على تغذية خلايا البشرة بعمق، بينما يقوم **${creamName}** بحماية الحاجز الجلدي من تأثير التكييف الجاف في دبي.`,
-        suggestedQuestions: [
-          "لماذا تم اختيار هذه التركيبة تحديداً؟",
-          "هل يمكن دمجها مع غسولي الحالي؟",
-          "كيف أعدل الروتين بحسب الطقس؟",
+          "Do I need an enzymatic exfoliant for pores?",
+          "How do I balance the T-zone without drying cheeks?",
+          "Can I use a purifying mask once a week?",
         ],
       };
     }
     return {
-      message: `Your ${params.activeTierData.tier.toUpperCase()} ritual is formulated with scientific precision for your profile (${params.skinProfile.skinType}, ${params.skinProfile.priorities[0]?.title.en || "Hydration"}). The **${serumName}** delivers concentrated peptide complexes, while the **${creamName}** forms a biomimetic barrier against indoor AC dehydration in the UAE.`,
+      message: `Your personalized ${params.activeTierData.tier.toUpperCase()} ritual is calibrated to your exact optical analysis (${params.skinProfile.skinType}, ${params.skinProfile.priorities[0]?.title.en || "Hydration"}). By combining **${serumName}** for targeted cellular infusion with **${creamName}** for biomimetic barrier protection, we counter the thermal shocks and constant AC dehydration of the UAE. Feel free to ask about any specific formulation, layering technique, or budget customization!`,
       suggestedQuestions: [
-        "Why was this exact formulation selected?",
+        "Why do I need this serum specifically?",
+        "Can you make the routine cheaper?",
         "Can I keep using my current cleanser?",
-        "How do I adjust my routine with seasonal changes?",
       ],
     };
   }
 
   defaultSuggestedQuestions(locale: "en" | "fr" | "ar"): string[] {
-    if (locale === "fr") {
-      return [
-        "Pourquoi cette routine a-t-elle été choisie ?",
-        "Puis-je l'associer à mon rétinol ou vitamine C ?",
-        "Comment simplifier mon rituel ?",
-      ];
-    }
     if (locale === "ar") {
       return [
-        "لماذا تم اختيار هذا الروتين بالتحديد؟",
-        "هل يمكن دمجه مع الريتينول وفيتامين سي؟",
-        "كيف أبسط خطوات الروتين؟",
+        "لماذا أحتاج إلى هذا السيروم تحديداً؟",
+        "هل يمكن جعل الروتين أكثر اقتصادية؟",
+        "كيف أدمج الريتينول مع هذا الروتين؟",
+      ];
+    }
+    if (locale === "fr") {
+      return [
+        "Pourquoi ce sérum est-il essentiel pour ma peau ?",
+        "Comment adapter ce rituel à mon budget ?",
+        "Puis-je l'associer à mon rétinol actuel ?",
       ];
     }
     return [
-      "Why was this routine selected for my skin?",
-      "Can I use this alongside my retinol or Vitamin C?",
-      "How can I simplify my routine?",
+      "Why do I need this serum specifically?",
+      "Can you make the routine cheaper?",
+      "Can I keep using my current cleanser?",
     ];
   }
 }

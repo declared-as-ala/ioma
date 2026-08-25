@@ -19,6 +19,7 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import type { RoutineTier } from "@ioma/config";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { JwtPayload } from "../auth/strategies/jwt.strategy";
 import { AiAnalysisService, MAX_IMAGE_SIZE_BYTES } from "./ai-analysis.service";
@@ -118,6 +119,62 @@ export class AiAnalysisController {
       throw new BadRequestException("Invalid routine tier.");
     }
     return this.aiAnalysisService.selectTier(id, user.sub, body.tier);
+  }
+
+  @Post("tts")
+  @UseGuards(OptionalJwtAuthGuard)
+  synthesizeSpeech(@Body() body: { text: string; locale?: "en" | "fr" | "ar" }) {
+    if (!body?.text || body.text.trim().length === 0) {
+      throw new BadRequestException("Text is required for speech synthesis.");
+    }
+    return this.aiAnalysisService.synthesizeSpeech(body.text, body.locale || "en");
+  }
+
+  @Post(":id/avatar-session")
+  @UseGuards(JwtAuthGuard)
+  createAvatarSession(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body?: { language?: "en" | "ar"; quality?: "high" | "medium" | "low" },
+  ) {
+    return this.aiAnalysisService.createAvatarSession(
+      id,
+      user.sub,
+      body?.language || "en",
+      body?.quality,
+    );
+  }
+
+  @Post(":id/avatar-speak")
+  @UseGuards(JwtAuthGuard)
+  avatarSpeak(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body: { sessionId: string; text: string; language?: "en" | "ar" },
+  ) {
+    if (!body?.sessionId || !body?.text) {
+      throw new BadRequestException("SessionId and text are required.");
+    }
+    return this.aiAnalysisService.avatarSpeak(
+      id,
+      user.sub,
+      body.sessionId,
+      body.text,
+      body.language || "en",
+    );
+  }
+
+  @Post(":id/avatar-interrupt")
+  @UseGuards(JwtAuthGuard)
+  avatarInterrupt(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+    @Body() body: { sessionId: string },
+  ) {
+    if (!body?.sessionId) {
+      throw new BadRequestException("SessionId is required.");
+    }
+    return this.aiAnalysisService.avatarInterrupt(id, user.sub, body.sessionId);
   }
 
   @Get(":id/avatar-video")

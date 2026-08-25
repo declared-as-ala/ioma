@@ -42,7 +42,12 @@ import { RecommendationEngineService } from "./services/recommendation-engine.se
 import { AiBeautyAdvisorService } from "./services/ai-beauty-advisor.service";
 import { FollowUpService } from "./services/follow-up.service";
 import { TalkingAvatarService } from "./services/talking-avatar.service";
-import type { TalkingAvatarResult } from "@ioma/types";
+import { VoiceService } from "./services/voice.service";
+import type {
+  AvatarSessionData,
+  TalkingAvatarResult,
+  VoiceSynthesisResult,
+} from "@ioma/types";
 
 export const ALLOWED_IMAGE_MIME_TYPES: readonly string[] = ALLOWED_AI_IMAGE_MIME_TYPES;
 export const MAX_IMAGE_SIZE_BYTES = MAX_AI_IMAGE_SIZE_BYTES;
@@ -69,6 +74,7 @@ export class AiAnalysisService {
     private readonly beautyAdvisor: AiBeautyAdvisorService,
     private readonly followUpService: FollowUpService,
     private readonly talkingAvatarService: TalkingAvatarService,
+    private readonly voiceService: VoiceService,
   ) {}
 
   private hashIp(ipAddress: string): string {
@@ -385,14 +391,23 @@ export class AiAnalysisService {
 
     if (locale === "ar") {
       const hydraLevel = doc.observations?.hydrationAppearance?.level || "متوازن";
-      const skinType = doc.detectedSkinType === "dry" ? "الجافة" : doc.detectedSkinType === "oily" ? "الدهنية" : doc.detectedSkinType === "sensitive" ? "الحساسة" : "المختلطة";
-      const primaryRange = doc.skinProfile?.priorities?.[0]?.title?.ar || "الترطيب العميق";
+      const skinType =
+        doc.detectedSkinType === "dry"
+          ? "الجافة"
+          : doc.detectedSkinType === "oily"
+            ? "الدهنية"
+            : doc.detectedSkinType === "sensitive"
+              ? "الحساسة"
+              : "المختلطة";
+      const primaryRange =
+        doc.skinProfile?.priorities?.[0]?.title?.ar || "الترطيب العميق";
 
       speechText = `أهلاً بكِ في إيوما باريس. لقد قمتُ بتحليل تفاصيل بشرتكِ بعناية من صورتكِ. أظهرت القراءة البصرية أن مستوى الترطيب الحالي يميل إلى ${hydraLevel}، ونوع بشرتكِ هو البشرة ${skinType}. لمواجهة جفاف التكييف في دبي، أولويتنا الأساسية هي ${primaryRange}. لقد صممتُ لكِ روتيناً مصمماً لتعزيز حيوية وإشراقة بشرتكِ خطوة بخطوة.`;
     } else {
       const hydraLevel = doc.observations?.hydrationAppearance?.level || "Balanced";
       const skinType = doc.detectedSkinType || "combination";
-      const primaryPriority = doc.skinProfile?.priorities?.[0]?.title?.en || "Deep Cellular Hydration";
+      const primaryPriority =
+        doc.skinProfile?.priorities?.[0]?.title?.en || "Deep Cellular Hydration";
 
       speechText = `Welcome to IOMA Paris. I have carefully studied the cosmetic indicators from your skin photograph. Your visual analysis indicates that hydration is currently ${hydraLevel}, and your baseline is ${skinType} skin. To defend against continuous air conditioning exposure in Dubai, our first priority is ${primaryPriority}. I have tailored a complete ritual designed to restore cellular comfort and long-lasting radiance.`;
     }
@@ -402,6 +417,52 @@ export class AiAnalysisService {
       language: locale,
       analysisId: id,
     });
+  }
+
+  async synthesizeSpeech(
+    text: string,
+    locale: "en" | "fr" | "ar",
+  ): Promise<VoiceSynthesisResult> {
+    return this.voiceService.synthesizeSpeech({ text, locale });
+  }
+
+  async createAvatarSession(
+    id: string,
+    userId: string,
+    language: "en" | "ar",
+    quality?: "high" | "medium" | "low",
+  ): Promise<AvatarSessionData> {
+    const doc = await this.analysisModel.findById(id).lean();
+    if (!doc) throw new NotFoundException("Analysis not found.");
+    if (doc.userId.toString() !== userId) {
+      throw new ForbiddenException("This analysis belongs to another account.");
+    }
+    return this.talkingAvatarService.createSession({ language, quality });
+  }
+
+  async avatarSpeak(
+    id: string,
+    userId: string,
+    sessionId: string,
+    text: string,
+    language: "en" | "ar",
+  ) {
+    const doc = await this.analysisModel.findById(id).lean();
+    if (!doc) throw new NotFoundException("Analysis not found.");
+    if (doc.userId.toString() !== userId) {
+      throw new ForbiddenException("This analysis belongs to another account.");
+    }
+    return this.talkingAvatarService.speak({ sessionId, text, language });
+  }
+
+  async avatarInterrupt(id: string, userId: string, sessionId: string) {
+    const doc = await this.analysisModel.findById(id).lean();
+    if (!doc) throw new NotFoundException("Analysis not found.");
+    if (doc.userId.toString() !== userId) {
+      throw new ForbiddenException("This analysis belongs to another account.");
+    }
+    await this.talkingAvatarService.interrupt(sessionId);
+    return { ok: true };
   }
 
   async getAvatarVideoForText(

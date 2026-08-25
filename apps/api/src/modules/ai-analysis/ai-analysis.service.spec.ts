@@ -19,6 +19,7 @@ import { RecommendationEngineService } from "./services/recommendation-engine.se
 import { AiBeautyAdvisorService } from "./services/ai-beauty-advisor.service";
 import { FollowUpService } from "./services/follow-up.service";
 import { TalkingAvatarService } from "./services/talking-avatar.service";
+import { VoiceService } from "./services/voice.service";
 
 const VALID_IMAGE = {
   buffer: Buffer.from("fake-image-bytes"),
@@ -102,6 +103,16 @@ describe("AiAnalysisService consent gating", () => {
               subtitles: [],
               provider: "browser_synth",
               status: "ready",
+            }),
+          },
+        },
+        {
+          provide: VoiceService,
+          useValue: {
+            synthesizeSpeech: jest.fn().mockResolvedValue({
+              format: "mp3",
+              durationSeconds: 10,
+              provider: "fallback",
             }),
           },
         },
@@ -221,6 +232,16 @@ describe("AiAnalysisService ownership", () => {
               subtitles: [],
               provider: "browser_synth",
               status: "ready",
+            }),
+          },
+        },
+        {
+          provide: VoiceService,
+          useValue: {
+            synthesizeSpeech: jest.fn().mockResolvedValue({
+              format: "mp3",
+              durationSeconds: 10,
+              provider: "fallback",
             }),
           },
         },

@@ -21,6 +21,8 @@ import { FollowUpService } from "./services/follow-up.service";
 
 import { TalkingAvatarService } from "./services/talking-avatar.service";
 import { TALKING_AVATAR_PROVIDER } from "./providers/avatar-provider.interface";
+import { VoiceService } from "./services/voice.service";
+import { VOICE_PROVIDER } from "./providers/voice-provider.interface";
 
 @Module({
   imports: [
@@ -41,6 +43,11 @@ import { TALKING_AVATAR_PROVIDER } from "./providers/avatar-provider.interface";
     RecommendationEngineService,
     AiBeautyAdvisorService,
     FollowUpService,
+    VoiceService,
+    {
+      provide: VOICE_PROVIDER,
+      useExisting: VoiceService,
+    },
     TalkingAvatarService,
     {
       provide: TALKING_AVATAR_PROVIDER,
@@ -69,6 +76,12 @@ import { TALKING_AVATAR_PROVIDER } from "./providers/avatar-provider.interface";
     },
   ],
   controllers: [AiAnalysisController],
-  exports: [AiAnalysisService, TalkingAvatarService, TALKING_AVATAR_PROVIDER],
+  exports: [
+    AiAnalysisService,
+    VoiceService,
+    VOICE_PROVIDER,
+    TalkingAvatarService,
+    TALKING_AVATAR_PROVIDER,
+  ],
 })
 export class AiAnalysisModule {}

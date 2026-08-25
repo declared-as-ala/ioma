@@ -1,14 +1,19 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type {
+  AvatarSessionData,
   AvatarSpeechSubtitle,
   AvatarSpeechTopic,
   TalkingAvatarResult,
 } from "@ioma/types";
 import type {
+  AvatarSpeakParams,
+  AvatarSpeakResult,
+  CreateAvatarSessionParams,
   CreateSpeechVideoParams,
   TalkingAvatarProvider,
 } from "../providers/avatar-provider.interface";
+import { VoiceService } from "./voice.service";
 
 @Injectable()
 export class TalkingAvatarService implements TalkingAvatarProvider {
@@ -18,38 +23,182 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
   // In-memory cache for avatar results by text hash
   private readonly cache = new Map<string, TalkingAvatarResult>();
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly voiceService: VoiceService,
+  ) {}
 
   async createSpeechVideo(params: CreateSpeechVideoParams): Promise<TalkingAvatarResult> {
-    const cacheKey = `${params.language}:${params.text.slice(0, 100)}`;
+    const cleanText = params.text.replace(/[*#_~`]/g, "").trim();
+    const cacheKey = `${params.language}:${cleanText.slice(0, 100)}`;
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
     }
 
-    const heygenKey = this.configService.get<string>("HEYGEN_API_KEY");
-    const didKey = this.configService.get<string>("DID_API_KEY");
-    const tavusKey = this.configService.get<string>("TAVUS_API_KEY");
+    const heygenKey =
+      this.configService.get<string>("HEYGEN_API_KEY") || process.env.HEYGEN_API_KEY;
+    const didKey =
+      this.configService.get<string>("DID_API_KEY") || process.env.DID_API_KEY;
+    const tavusKey =
+      this.configService.get<string>("TAVUS_API_KEY") || process.env.TAVUS_API_KEY;
 
     let result: TalkingAvatarResult;
 
     if (heygenKey) {
-      result = await this.generateHeyGenAvatar(params, heygenKey);
+      result = await this.generateHeyGenAvatar(cleanText, params, heygenKey);
     } else if (didKey) {
-      result = await this.generateDidAvatar(params, didKey);
+      result = await this.generateDidAvatar(cleanText, params, didKey);
     } else if (tavusKey) {
-      result = await this.generateTavusAvatar(params, tavusKey);
+      result = await this.generateTavusAvatar(cleanText, params, tavusKey);
     } else {
       this.logger.log(
-        "No external avatar API credentials found (HEYGEN_API_KEY / DID_API_KEY / TAVUS_API_KEY). Using high-fidelity IOMA Studio Fallback.",
+        "No external avatar credentials configured (HEYGEN_API_KEY / DID_API_KEY / TAVUS_API_KEY). Using high-fidelity IOMA Studio Fallback.",
       );
-      result = this.generateStudioFallback(params);
+      result = await this.generateStudioFallback(cleanText, params);
     }
 
     this.cache.set(cacheKey, result);
     return result;
   }
 
+  /**
+   * HeyGen LiveAvatar Interactive Streaming Session creation
+   */
+  async createSession(params: CreateAvatarSessionParams): Promise<AvatarSessionData> {
+    const heygenKey =
+      this.configService.get<string>("HEYGEN_API_KEY") || process.env.HEYGEN_API_KEY;
+
+    if (heygenKey) {
+      try {
+        const avatarId =
+          params.avatarId ||
+          this.configService.get<string>("HEYGEN_AVATAR_ID") ||
+          "Eleonore_French_Skincare_Consultant_v2";
+        const voiceId =
+          params.voiceId ||
+          (params.language === "ar"
+            ? this.configService.get<string>("HEYGEN_VOICE_ID_AR") || "ar-AE-FatimaNeural"
+            : this.configService.get<string>("HEYGEN_VOICE_ID_EN") ||
+              "en-FR-CosetteNeural");
+
+        const res = await fetch("https://api.heygen.com/v1/streaming.new", {
+          method: "POST",
+          headers: {
+            "x-api-key": heygenKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quality: params.quality || "high",
+            avatar_name: avatarId,
+            voice: {
+              voice_id: voiceId,
+              rate: 0.95,
+            },
+          }),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as any;
+          const session = data.data;
+          return {
+            sessionId: session.session_id,
+            streamUrl: session.sdp?.sdp || session.url,
+            webrtcOffer: session.sdp?.sdp,
+            webrtcIceServers: session.ice_servers2 || session.ice_servers,
+            provider: "heygen",
+            status: "connected",
+          };
+        }
+      } catch (err) {
+        this.logger.warn(`HeyGen LiveAvatar session failed: ${(err as Error).message}`);
+      }
+    }
+
+    // Default Studio fallback session
+    return {
+      sessionId: `studio_session_${Date.now()}`,
+      provider: "studio",
+      status: "connected",
+    };
+  }
+
+  async speak(params: AvatarSpeakParams): Promise<AvatarSpeakResult> {
+    const heygenKey =
+      this.configService.get<string>("HEYGEN_API_KEY") || process.env.HEYGEN_API_KEY;
+
+    if (heygenKey && !params.sessionId.startsWith("studio_session")) {
+      try {
+        const res = await fetch("https://api.heygen.com/v1/streaming.task", {
+          method: "POST",
+          headers: {
+            "x-api-key": heygenKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            session_id: params.sessionId,
+            text: params.text,
+            task_type: params.taskType || "talk",
+          }),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as any;
+          return {
+            taskId: data.data?.task_id || `task_${Date.now()}`,
+            durationSeconds: this.estimateDuration(params.text, params.language),
+          };
+        }
+      } catch (err) {
+        this.logger.warn(`HeyGen speak task failed: ${(err as Error).message}`);
+      }
+    }
+
+    return {
+      taskId: `studio_task_${Date.now()}`,
+      durationSeconds: this.estimateDuration(params.text, params.language),
+    };
+  }
+
+  async interrupt(sessionId: string): Promise<void> {
+    const heygenKey =
+      this.configService.get<string>("HEYGEN_API_KEY") || process.env.HEYGEN_API_KEY;
+    if (heygenKey && !sessionId.startsWith("studio_session")) {
+      try {
+        await fetch("https://api.heygen.com/v1/streaming.interrupt", {
+          method: "POST",
+          headers: {
+            "x-api-key": heygenKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+      } catch (err) {
+        this.logger.warn(`HeyGen interrupt failed: ${(err as Error).message}`);
+      }
+    }
+  }
+
+  async closeSession(sessionId: string): Promise<void> {
+    const heygenKey =
+      this.configService.get<string>("HEYGEN_API_KEY") || process.env.HEYGEN_API_KEY;
+    if (heygenKey && !sessionId.startsWith("studio_session")) {
+      try {
+        await fetch("https://api.heygen.com/v1/streaming.stop", {
+          method: "POST",
+          headers: {
+            "x-api-key": heygenKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+      } catch (err) {
+        this.logger.warn(`HeyGen close session failed: ${(err as Error).message}`);
+      }
+    }
+  }
+
   private async generateHeyGenAvatar(
+    cleanText: string,
     params: CreateSpeechVideoParams,
     apiKey: string,
   ): Promise<TalkingAvatarResult> {
@@ -79,7 +228,7 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
               },
               voice: {
                 type: "text",
-                input_text: params.text,
+                input_text: cleanText,
                 voice_id: params.voiceId || defaultVoice,
                 speed: 0.95,
               },
@@ -104,18 +253,21 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
         jobId: videoId,
         videoUrl: videoId ? `https://api.heygen.com/v2/video/${videoId}` : undefined,
         posterUrl: "/images/ai-expert/eleonore-poster.webp",
-        durationSeconds: this.estimateDuration(params.text, params.language),
-        subtitles: this.generateTimedSubtitles(params.text, params.language),
+        durationSeconds: this.estimateDuration(cleanText, params.language),
+        subtitles: this.generateTimedSubtitles(cleanText, params.language),
         provider: "heygen",
         status: "ready",
       };
     } catch (err) {
-      this.logger.warn(`HeyGen API call failed: ${(err as Error).message}. Falling back to Studio.`);
-      return this.generateStudioFallback(params);
+      this.logger.warn(
+        `HeyGen API call failed: ${(err as Error).message}. Falling back to Studio.`,
+      );
+      return this.generateStudioFallback(cleanText, params);
     }
   }
 
   private async generateDidAvatar(
+    cleanText: string,
     params: CreateSpeechVideoParams,
     apiKey: string,
   ): Promise<TalkingAvatarResult> {
@@ -140,7 +292,7 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
           source_url: sourceUrl,
           script: {
             type: "text",
-            input: params.text,
+            input: cleanText,
             provider: {
               type: "microsoft",
               voice_id: params.voiceId || voice,
@@ -160,18 +312,21 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
         jobId: data.id,
         videoUrl: data.result_url,
         posterUrl: "/images/ai-expert/eleonore-poster.webp",
-        durationSeconds: this.estimateDuration(params.text, params.language),
-        subtitles: this.generateTimedSubtitles(params.text, params.language),
+        durationSeconds: this.estimateDuration(cleanText, params.language),
+        subtitles: this.generateTimedSubtitles(cleanText, params.language),
         provider: "did",
         status: "ready",
       };
     } catch (err) {
-      this.logger.warn(`D-ID API call failed: ${(err as Error).message}. Falling back to Studio.`);
-      return this.generateStudioFallback(params);
+      this.logger.warn(
+        `D-ID API call failed: ${(err as Error).message}. Falling back to Studio.`,
+      );
+      return this.generateStudioFallback(cleanText, params);
     }
   }
 
   private async generateTavusAvatar(
+    cleanText: string,
     params: CreateSpeechVideoParams,
     apiKey: string,
   ): Promise<TalkingAvatarResult> {
@@ -188,7 +343,7 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
         },
         body: JSON.stringify({
           replica_id: replicaId,
-          script: params.text,
+          script: cleanText,
           video_name: `ioma_consultation_${Date.now()}`,
         }),
       });
@@ -200,33 +355,44 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
         jobId: data.video_id,
         videoUrl: data.download_url,
         posterUrl: "/images/ai-expert/eleonore-poster.webp",
-        durationSeconds: this.estimateDuration(params.text, params.language),
-        subtitles: this.generateTimedSubtitles(params.text, params.language),
+        durationSeconds: this.estimateDuration(cleanText, params.language),
+        subtitles: this.generateTimedSubtitles(cleanText, params.language),
         provider: "tavus",
         status: "ready",
       };
     } catch (err) {
-      this.logger.warn(`Tavus API call failed: ${(err as Error).message}. Falling back to Studio.`);
-      return this.generateStudioFallback(params);
+      this.logger.warn(
+        `Tavus API call failed: ${(err as Error).message}. Falling back to Studio.`,
+      );
+      return this.generateStudioFallback(cleanText, params);
     }
   }
 
-  private generateStudioFallback(params: CreateSpeechVideoParams): TalkingAvatarResult {
-    const duration = this.estimateDuration(params.text, params.language);
-    const subtitles = this.generateTimedSubtitles(params.text, params.language);
+  private async generateStudioFallback(
+    cleanText: string,
+    params: CreateSpeechVideoParams,
+  ): Promise<TalkingAvatarResult> {
+    const duration = this.estimateDuration(cleanText, params.language);
+    const subtitles = this.generateTimedSubtitles(cleanText, params.language);
+
+    // Synthesize neural audio via VoiceService if available
+    const voiceAudio = await this.voiceService.synthesizeSpeech({
+      text: cleanText,
+      locale: params.language,
+    });
 
     return {
       posterUrl: "/images/ai-expert/eleonore-poster.webp",
-      durationSeconds: duration,
+      audioUrl: voiceAudio.audioBase64,
+      durationSeconds: voiceAudio.durationSeconds || duration,
       subtitles,
-      provider: "browser_synth",
+      provider: "studio",
       status: "ready",
     };
   }
 
   private estimateDuration(text: string, language: "en" | "ar"): number {
     const words = text.trim().split(/\s+/).filter(Boolean).length;
-    // English ~135 WPM (2.25 words/sec), Arabic ~125 WPM (2.08 words/sec)
     const wordsPerSec = language === "ar" ? 2.08 : 2.25;
     return Math.max(3, Math.ceil(words / wordsPerSec) + 1);
   }
@@ -235,7 +401,6 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
     text: string,
     language: "en" | "ar",
   ): AvatarSpeechSubtitle[] {
-    // Split sentences cleanly in English or Arabic
     const sentences = text
       .split(language === "ar" ? /(?<=[.!?؟،\n])\s+/ : /(?<=[.!?\n])\s+/)
       .map((s) => s.trim())
@@ -246,29 +411,68 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
     }
 
     const subtitles: AvatarSpeechSubtitle[] = [];
-    let currentMs = 400; // Small initial pause for natural cadence
+    let currentMs = 400;
 
     for (const sentence of sentences) {
       const wordCount = sentence.split(/\s+/).length;
-      const durationMs = Math.max(1600, Math.round(wordCount * (language === "ar" ? 480 : 440)));
+      const durationMs = Math.max(
+        1600,
+        Math.round(wordCount * (language === "ar" ? 480 : 440)),
+      );
 
-      // Detect topic to trigger synchronized UI highlight
       let activeConcernKey: string | undefined;
       const lower = sentence.toLowerCase();
 
-      if (lower.includes("hydrat") || lower.includes("ترطيب") || lower.includes("water") || lower.includes("dehydrat")) {
+      if (
+        lower.includes("hydrat") ||
+        lower.includes("ترطيب") ||
+        lower.includes("water") ||
+        lower.includes("dehydrat")
+      ) {
         activeConcernKey = "hydration";
-      } else if (lower.includes("texture") || lower.includes("ملمس") || lower.includes("smooth") || lower.includes("rough")) {
+      } else if (
+        lower.includes("texture") ||
+        lower.includes("ملمس") ||
+        lower.includes("smooth") ||
+        lower.includes("rough")
+      ) {
         activeConcernKey = "texture";
-      } else if (lower.includes("redness") || lower.includes("احمرار") || lower.includes("sensitiv") || lower.includes("calm")) {
+      } else if (
+        lower.includes("redness") ||
+        lower.includes("احمرار") ||
+        lower.includes("sensitiv") ||
+        lower.includes("calm")
+      ) {
         activeConcernKey = "redness";
-      } else if (lower.includes("pore") || lower.includes("مسام") || lower.includes("t-zone") || lower.includes("shine")) {
+      } else if (
+        lower.includes("pore") ||
+        lower.includes("مسام") ||
+        lower.includes("t-zone") ||
+        lower.includes("shine")
+      ) {
         activeConcernKey = "pores";
-      } else if (lower.includes("pigment") || lower.includes("تصبغ") || lower.includes("spot") || lower.includes("dark")) {
+      } else if (
+        lower.includes("pigment") ||
+        lower.includes("تصبغ") ||
+        lower.includes("spot") ||
+        lower.includes("dark")
+      ) {
         activeConcernKey = "pigmentation";
-      } else if (lower.includes("line") || lower.includes("خطوط") || lower.includes("wrinkle") || lower.includes("aging")) {
+      } else if (
+        lower.includes("line") ||
+        lower.includes("خطوط") ||
+        lower.includes("wrinkle") ||
+        lower.includes("aging")
+      ) {
         activeConcernKey = "fineLines";
-      } else if (lower.includes("serum") || lower.includes("cream") || lower.includes("سيروم") || lower.includes("كريم") || lower.includes("product") || lower.includes("routine")) {
+      } else if (
+        lower.includes("serum") ||
+        lower.includes("cream") ||
+        lower.includes("سيروم") ||
+        lower.includes("كريم") ||
+        lower.includes("product") ||
+        lower.includes("routine")
+      ) {
         activeConcernKey = "recommendations";
       }
 
@@ -279,7 +483,7 @@ export class TalkingAvatarService implements TalkingAvatarProvider {
         activeConcernKey,
       });
 
-      currentMs += durationMs + 250; // Breathing gap between sentences
+      currentMs += durationMs + 250;
     }
 
     return subtitles;
