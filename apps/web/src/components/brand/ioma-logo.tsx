@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface IomaLogoProps {
@@ -28,13 +27,11 @@ export function IomaLogo({
   return (
     <span className={cn("inline-flex flex-col items-center gap-0.5", className)}>
       {!imageError ? (
-        <Image
-          src="/images/ioma-logo.avif"
+        <img
+          src="/images/ioma-logo.png"
           alt="IOMA Paris"
           width={width}
           height={height}
-          priority
-          unoptimized
           onError={() => setImageError(true)}
           className={cn(
             "h-10 w-auto object-contain transition-all duration-200",
