@@ -179,10 +179,15 @@ export function Header() {
         <div className="relative mx-auto flex h-20 max-w-[1440px] items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
             <MobileNavigation />
-            <Link href="/" aria-label={t("home")} className="flex items-center">
-              <IomaLogo variant={isDarkHeader ? "white" : "black"} />
-            </Link>
           </div>
+
+          <Link
+            href="/"
+            aria-label={t("home")}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+          >
+            <IomaLogo variant={isDarkHeader ? "white" : "black"} />
+          </Link>
 
           <div className="flex items-center gap-2">
             <Button

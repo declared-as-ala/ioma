@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface IomaLogoProps {
@@ -7,42 +8,32 @@ interface IomaLogoProps {
   /** Show the "N°1 de la Cosmétique Personnalisée*" claim beneath the mark. */
   withClaim?: boolean;
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-/**
- * No official logo vector file exists yet (see CLIENT_REQUIREMENTS.md).
- * This is a typographic approximation of the charter's wordmark — lowercase
- * "ioma" with a dotted "i", small-caps "PARIS" signature beneath — built to
- * the charter's proportion/spacing rules (DESIGN_SYSTEM.md "Logo"), not a
- * traced vector. Replace the markup here with the licensed SVG the moment
- * it's supplied; nothing else in the app references the logo internals
- * directly, only this component.
- */
 export function IomaLogo({
   variant = "black",
   withClaim = false,
   className,
+  width = 140,
+  height = 58,
 }: IomaLogoProps) {
-  const color = variant === "white" ? "text-ioma-white" : "text-ioma-black";
-
   return (
-    <span
-      className={cn(
-        "inline-flex select-none flex-col items-start gap-0.5 leading-none",
-        color,
-        className,
-      )}
-    >
-      <span className="flex items-baseline gap-2">
-        <span className="font-display text-2xl italic tracking-tight lowercase">
-          ioma
-        </span>
-        <span className="text-[0.6rem] font-medium tracking-[0.25em] uppercase">
-          Paris
-        </span>
-      </span>
+    <span className={cn("inline-flex flex-col items-center gap-1", className)}>
+      <Image
+        src="/ioma_paris_logo_280x117_19776788-8360-4380-ac89-b055c196a1be.avif"
+        alt="IOMA Paris"
+        width={width}
+        height={height}
+        priority
+        className={cn(
+          "h-auto w-auto max-h-12 object-contain transition-all duration-200",
+          variant === "white" && "brightness-0 invert",
+        )}
+      />
       {withClaim && (
-        <span className="text-[0.55rem] tracking-tight text-muted-foreground">
+        <span className="text-[0.55rem] tracking-tight text-muted-foreground text-center">
           N°1 de la Cosmétique Personnalisée*
         </span>
       )}
