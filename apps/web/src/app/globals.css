@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* The operational admin surface follows Carbon-style density and flat panels. */
+.admin-shell { font-family: var(--font-manrope), var(--font-cairo), sans-serif; }
+[dir="rtl"] .admin-shell { font-family: var(--font-cairo), sans-serif; }
+.admin-shell [data-slot="card"], .admin-shell [data-slot="button"] { border-radius: 0; box-shadow: none; }
+.admin-shell button, .admin-shell input, .admin-shell select, .admin-shell summary { min-height: 44px; }
+.admin-shell input, .admin-shell select, .admin-shell textarea { min-width: 0; max-width: 100%; }
+.admin-shell table th { white-space: nowrap; }
+.admin-shell table { border-collapse: collapse; }
+.admin-shell svg { max-width: 100%; }
+
 /* shadcn's generated components use `dark:` classes throughout; we never
    apply a `.dark` class anywhere (no dark mode in scope — see SPRINTS.md
    Sprint 2 acceptance criteria), but Tailwind v4 requires the variant to be
@@ -215,3 +225,21 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
 }
 
+
+/* Authenticated customer and partner surfaces share the IOMA editorial rhythm. */
+.account-experience { animation: account-enter 200ms ease-out; }
+.account-experience h1 { letter-spacing: -.025em; }
+.account-experience button, .account-experience [role="combobox"] { min-height: 44px; }
+.account-experience [data-slot="card"] { border-radius: 0; box-shadow: none; }
+@keyframes account-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
